@@ -1,0 +1,11 @@
+apply plugin: 'java-library'
+apply plugin: 'distribution'
+apply plugin: 'maven'
+apply plugin: 'eclipse'
+
+group = 'com.github.doip'
+version = '1.0.0'
+
+reposiories {
+	jcenter()
+}
