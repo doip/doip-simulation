@@ -6,6 +6,13 @@ apply plugin: 'eclipse'
 group = 'com.github.doip'
 version = '1.0.0'
 
-reposiories {
+repositories {
 	jcenter()
+	maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+	implementation 'com.github.doip:doip-library:1.0.1'
+	implementation 'com.github.doip:doip-logging:1.1.5'
+	testImplementation 'junit:junit:4.12'
 }
