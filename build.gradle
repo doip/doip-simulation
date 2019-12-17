@@ -1,6 +1,7 @@
 apply plugin: 'java-library'
 apply plugin: 'maven'
 apply plugin: 'eclipse'
+apply plugin: 'jacoco'
 
 group = 'com.github.doip'
 version = '1.0.3'
@@ -14,4 +15,10 @@ dependencies {
 	implementation 'com.github.doip:doip-library:1.0.1'
 	implementation 'com.github.doip:doip-logging:1.1.5'
 	testImplementation 'com.github.doip:doip-junit:1.0.6'
+	testImplementation 'junit:junit:4.12'
+	
+}
+
+test {
+	systemProperty 'log4j.configurationFile', 'src/test/resources/log4j2.xml'
 }
