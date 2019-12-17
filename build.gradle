@@ -4,7 +4,7 @@ apply plugin: 'eclipse'
 apply plugin: 'jacoco'
 
 group = 'com.github.doip'
-version = '1.0.3'
+version = '1.0.4'
 
 repositories {
 	jcenter()
@@ -17,6 +17,12 @@ dependencies {
 	testImplementation 'com.github.doip:doip-junit:1.0.6'
 	testImplementation 'junit:junit:4.12'
 	
+}
+
+// Generates a JAR file with all test classes
+task testJar(type: Jar) {
+	classifier = 'tests'
+	from sourceSets.test.output
 }
 
 test {
