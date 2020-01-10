@@ -1,7 +1,9 @@
-apply plugin: 'java-library'
-apply plugin: 'maven'
-apply plugin: 'eclipse'
-apply plugin: 'jacoco'
+plugins {
+	id 'java-library'
+	id 'maven'
+	id 'eclipse'
+	id 'jacoco'
+}
 
 group = 'com.github.doip'
 version = '1.0.4'
@@ -12,17 +14,18 @@ repositories {
 }
 
 dependencies {
-	implementation 'com.github.doip:doip-library:1.0.1'
+	implementation 'com.github.doip:doip-library:1.0.3'
 	implementation 'com.github.doip:doip-logging:1.1.5'
-	testImplementation 'com.github.doip:doip-junit:1.0.6'
+	testImplementation 'com.github.doip:doip-junit:1.0.7'
 	testImplementation 'junit:junit:4.12'
-	
 }
 
-// Generates a JAR file with all test classes
-task testJar(type: Jar) {
-	classifier = 'tests'
-	from sourceSets.test.output
+jar {
+	manifest {
+		attributes (
+			'Class-Path' : configurations.runtimeClasspath.collect { it.getName() }.join(' ')
+		)
+	}
 }
 
 test {

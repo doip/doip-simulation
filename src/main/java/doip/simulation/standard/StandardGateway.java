@@ -13,6 +13,7 @@ import java.util.LinkedList;
 
 import doip.logging.LogManager;
 import doip.logging.Logger;
+import doip.simulation.nodes.Ecu;
 import doip.simulation.nodes.EcuConfig;
 import doip.simulation.nodes.EcuListener;
 import doip.simulation.nodes.Gateway;
@@ -62,7 +63,7 @@ public class StandardGateway
 
 	private LinkedList<StandardTcpConnection> standardConnectionList = new LinkedList<StandardTcpConnection>();
 
-	private LinkedList<StandardEcu> standardEcuList = new LinkedList<StandardEcu>();
+	private LinkedList<Ecu> standardEcuList = new LinkedList<Ecu>();
 
 	private int connectionInstanceCounter = 0;
 
@@ -163,7 +164,7 @@ public class StandardGateway
 		}
 
 		if (source != standardConnection.getRegisteredSourceAddress()) {
-			DoipTcpDiagnosticMessageNegAck negAck = new DoipTcpDiagnosticMessageNegAck(this.config.getLogicalAddress(),
+			DoipTcpDiagnosticMessageNegAck negAck = new DoipTcpDiagnosticMessageNegAck(target,
 					source, DoipTcpDiagnosticMessageNegAck.NACK_CODE_INVALID_SOURCE_ADDRESS, new byte[] {});
 			doipTcpConnection.send(negAck);
 			doipTcpConnection.stop();
@@ -180,10 +181,10 @@ public class StandardGateway
 
 		// Iterate over all ECUs and find the ECU by the given
 		// target address.
-		StandardEcu targetEcu = null;
-		Iterator<StandardEcu> iter = this.standardEcuList.iterator();
+		Ecu targetEcu = null;
+		Iterator<Ecu> iter = this.standardEcuList.iterator();
 		while (iter.hasNext()) {
-			StandardEcu tmpEcu = iter.next();
+			Ecu tmpEcu = iter.next();
 			if (tmpEcu.getConfig().getPhysicalAddress() == target) {
 				if (logger.isInfoEnabled()) {
 					logger.info("Found ECU to handle diagnostic message");
@@ -195,7 +196,7 @@ public class StandardGateway
 
 		if (targetEcu == null) {
 			logger.warn("Could not find a ECU with target address " + target);
-			DoipTcpDiagnosticMessageNegAck negAck = new DoipTcpDiagnosticMessageNegAck(this.config.getLogicalAddress(),
+			DoipTcpDiagnosticMessageNegAck negAck = new DoipTcpDiagnosticMessageNegAck(target,
 					source, DoipTcpDiagnosticMessageNegAck.NACK_CODE_UNKNOWN_TARGET_ADDRESS, new byte[] {});
 			doipTcpConnection.send(negAck);
 			if (logger.isTraceEnabled()) {
@@ -206,7 +207,7 @@ public class StandardGateway
 		}
 
 		// A target ECU could be found; send the positive acknowledgement
-		DoipTcpDiagnosticMessagePosAck posAck = new DoipTcpDiagnosticMessagePosAck(this.config.getLogicalAddress(),
+		DoipTcpDiagnosticMessagePosAck posAck = new DoipTcpDiagnosticMessagePosAck(target,
 				source, 0x00, new byte[] {});
 		doipTcpConnection.send(posAck);
 		UdsMessage request = new UdsMessage(source, target, UdsMessage.PHYSICAL, diagnosticMessage);
@@ -545,7 +546,7 @@ public class StandardGateway
 		Iterator<EcuConfig> iter = ecuConfigList.iterator();
 		while (iter.hasNext()) {
 			EcuConfig ecuConfig = iter.next();
-			StandardEcu ecu = this.createEcu(ecuConfig);
+			Ecu ecu = this.createEcu(ecuConfig);
 			ecu.addListener(this);
 			this.standardEcuList.add(ecu);
 		}
@@ -559,7 +560,7 @@ public class StandardGateway
 	 * @param config The configuration of the ECU
 	 * @return A new instance of the ECU
 	 */
-	public StandardEcu createEcu(EcuConfig config) {
+	public Ecu createEcu(EcuConfig config) {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public StandardEcu createEcu(EcuConfig config)");
 		}
@@ -706,9 +707,9 @@ public class StandardGateway
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public void startEcus()");
 		}
-		Iterator<StandardEcu> iter = this.standardEcuList.iterator();
+		Iterator<Ecu> iter = this.standardEcuList.iterator();
 		while (iter.hasNext()) {
-			StandardEcu ecu = iter.next();
+			Ecu ecu = iter.next();
 			ecu.start();
 		}
 		if (logger.isTraceEnabled()) {
@@ -768,9 +769,9 @@ public class StandardGateway
 
 	public void stopEcus() {
 		logger.trace(">>> public void stopEcus()");
-		Iterator<StandardEcu> iter = this.standardEcuList.iterator();
+		Iterator<Ecu> iter = this.standardEcuList.iterator();
 		while (iter.hasNext()) {
-			StandardEcu ecu = iter.next();
+			Ecu ecu = iter.next();
 			ecu.stop();
 		}
 		logger.trace("<<< public void stopEcus()");
@@ -778,9 +779,9 @@ public class StandardGateway
 
 	public void unprepareEcus() {
 		logger.trace(">>> public void unprepareEcus()");
-		Iterator<StandardEcu> iter = this.standardEcuList.iterator();
+		Iterator<Ecu> iter = this.standardEcuList.iterator();
 		while (iter.hasNext()) {
-			StandardEcu ecu = iter.next();
+			Ecu ecu = iter.next();
 			ecu.removeListener(this);
 		}
 		this.standardEcuList.clear();

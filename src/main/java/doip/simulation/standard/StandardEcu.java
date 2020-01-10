@@ -37,7 +37,7 @@ public class StandardEcu extends Ecu implements Runnable {
 	 * request will be handled later by the thread of the ECU. If there is still a
 	 * request stored locally which had not been handled "busy" variable will be set
 	 * to indicate that later in the thread of the ECU a negative response with NRC
-	 * 0x21 (busy, repeat request) will be send.
+	 * 0x21 (busy, repeat request) should be send.
 	 * 
 	 * @param request The new request.
 	 */
@@ -72,11 +72,19 @@ public class StandardEcu extends Ecu implements Runnable {
 
 		boolean ret = false;
 		ret = processUdsMessageByFunction(request);
-		if (ret)
+		if (ret) {
+			if (logger.isTraceEnabled()) {
+				logger.trace("<<< public void onUdsMessageReceived(UdsMessage request)");
+			}
 			return;
+		}
 		ret = processUdsMessageByLookupTable(request);
-		if (ret)
+		if (ret) {
+			if (logger.isTraceEnabled()) {
+				logger.trace("<<< public void onUdsMessageReceived(UdsMessage request)");
+			}
 			return;
+		}
 		processUdsMessageByMessageInterpretation(request);
 
 		if (logger.isTraceEnabled()) {
@@ -104,6 +112,12 @@ public class StandardEcu extends Ecu implements Runnable {
 		return false;
 	}
 
+	/**
+	 * Will process a UDS message by finding a matching pattern in the lookup table.
+	 * 
+	 * @param request
+	 * @return
+	 */
 	public boolean processUdsMessageByLookupTable(UdsMessage request) {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public boolean processUdsMessageByLookupTable(UdsMessage request)");
@@ -124,9 +138,7 @@ public class StandardEcu extends Ecu implements Runnable {
 			}
 			UdsMessage udsResponse = new UdsMessage(this.getConfig().getPhysicalAddress(), request.getSourceAdrress(),
 					UdsMessage.PHYSICAL, response);
-			// It's important to set the current request to null
-			// BEFORE sending the response
-			this.setCurrentRequest(null);
+			
 			this.onSendUdsMessage(udsResponse);
 			ret = true;
 		} else {
@@ -154,15 +166,20 @@ public class StandardEcu extends Ecu implements Runnable {
 		int source = request.getSourceAdrress();
 		byte[] requestMessage = request.getMessage();
 		byte[] responseMessage = new byte[] { 0x7F, 0x00, 0x10 };
+		
 		if (requestMessage.length > 0) {
 			responseMessage[1] = requestMessage[0];
 		}
+		
 		UdsMessage response = new UdsMessage(this.getConfig().getPhysicalAddress(), source, UdsMessage.PHYSICAL,
 				responseMessage);
+		
+		this.onSendUdsMessage(response);
+
 		if (logger.isTraceEnabled()) {
 			logger.trace("<<< public void processUdsMessageByMessageInterpretation(UdsMessage request)");
 		}
-		this.onSendUdsMessage(response);
+		
 		return false;
 	}
 
@@ -180,6 +197,9 @@ public class StandardEcu extends Ecu implements Runnable {
 	}
 
 	private synchronized void handleRequest() {
+
+		// Don't log function entry and exit! It would be called every millisecond.
+		
 		if (this.busyFlag) {
 			UdsMessage request = this.getCurrentRequest();
 			byte sid = request.getMessage()[0];
@@ -190,12 +210,14 @@ public class StandardEcu extends Ecu implements Runnable {
 		}
 
 		UdsMessage currentRequest = this.getCurrentRequest();
+		
 		if (currentRequest != null) {
 			if (logger.isInfoEnabled()) {
 				logger.info("Picked up new request to handle it");
 			}
 			onUdsMessageReceived(currentRequest);
 		}
+		
 		this.setCurrentRequest(null);
 	}
 

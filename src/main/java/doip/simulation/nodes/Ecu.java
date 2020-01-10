@@ -65,4 +65,6 @@ public abstract class Ecu {
 	public abstract void start();
 
 	public abstract void stop();
+
+	public abstract void dropRequest(UdsMessage request);
 }

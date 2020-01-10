@@ -16,9 +16,6 @@ import doip.library.util.LookupTable;
 /**
  * Contains the data from the configuration file for a gateway, for example for
  * the file GW.properties.
- * 
- * @author marco
- *
  */
 public class GatewayConfig {
 

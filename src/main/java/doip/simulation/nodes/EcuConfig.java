@@ -11,6 +11,9 @@ import doip.library.properties.PropertyFile;
 import doip.library.util.Helper;
 import doip.library.util.LookupTable;
 
+/**
+ * Stores the configuration for an ECU
+ */
 public class EcuConfig {
 
 	private static Logger logger = LogManager.getLogger(EcuConfig.class);
@@ -38,6 +41,13 @@ public class EcuConfig {
 		return udsLookupTable;
 	}
 
+	/**
+	 * Loads the configuration from a file
+	 * @param filename
+	 * @throws IOException
+	 * @throws MissingProperty
+	 * @throws EmptyPropertyValue
+	 */
 	public void loadFromFile(String filename) throws IOException, MissingProperty, EmptyPropertyValue {
 		logger.info("Load properties from file " + filename);
 
@@ -55,6 +65,11 @@ public class EcuConfig {
 			loadUdsLookupTable();
 	}
 
+	/** 
+	 * Loads the lookup tables from the files which are defined in member variable "udsFiles".
+	 * 
+	 * @throws IOException
+	 */
 	public void loadUdsLookupTable() throws IOException {
 		String[] files = this.udsFiles.split(";");
 		this.udsLookupTable.appendPatterns(path, files);
