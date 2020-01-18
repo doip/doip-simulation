@@ -167,14 +167,14 @@ public class GatewayConfig {
 		this.udpLookupTable = new LookupTable();
 		if (this.udpFiles != null) {
 			String[] files = this.udpFiles.split(";");
-			this.udpLookupTable.appendPatterns(path, files);
+			this.udpLookupTable.addLookupEntriesFromFiles(path, files);
 		}
 
 		// Load TCP lookup table
 		this.tcpLookupTable = new LookupTable();
 		if (this.tcpFiles != null) {
 			String[] files = this.tcpFiles.split(";");
-			this.tcpLookupTable.appendPatterns(path, files);
+			this.tcpLookupTable.addLookupEntriesFromFiles(path, files);
 		}
 		logger.trace("<<< public void loadLookupTables() throws IOException");
 	}
