@@ -14,4 +14,3 @@ sed -i s/'version.*=.*'/'version = '\'"$version"\'/g build.gradle
 # Modify pom.xml
 sed -i s/'<version>.*<\/version>'/'<version>'"$version"'<\/version>'/g pom.xml
 
-# Modify src/main/dist/start.sh
