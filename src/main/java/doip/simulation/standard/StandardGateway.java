@@ -99,11 +99,13 @@ public class StandardGateway
 	@Override
 	public void onConnectionAccepted(TcpServer tcpServer, Socket socket) {
 		logger.trace(">>> void onConnectionAccepted(Socket socket)");
+		
 		try {
 			socket.setTcpNoDelay(true);
 		} catch (SocketException e) {
 			logger.error(Helper.getExceptionAsString(e));
 		}
+		
 		StandardTcpConnection standardConnection = createConnection();
 		standardConnection.addListener(this);
 		this.standardConnectionList.add(standardConnection);
@@ -142,6 +144,9 @@ public class StandardGateway
 				"<<< public void onDoipTcpAliveCheckResponse(DoipTcpConnection doipTcpConnection, DoipTcpAliveCheckResponse doipMessage)");
 	}
 
+	/**
+	 * Will be called when a DoIP diagnostic message had been received
+	 */
 	@Override
 	public void onDoipTcpDiagnosticMessage(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessage doipMessage) {
 		if (logger.isTraceEnabled()) {
@@ -163,6 +168,8 @@ public class StandardGateway
 					+ Conversion.byteArrayToHexString(diagnosticMessage));
 		}
 
+		// [DoIP-070] If source address is not activated on the current socket
+		// send a negative acknowledgement with code 0x02 and close the socket
 		if (source != standardConnection.getRegisteredSourceAddress()) {
 			DoipTcpDiagnosticMessageNegAck negAck = new DoipTcpDiagnosticMessageNegAck(target,
 					source, DoipTcpDiagnosticMessageNegAck.NACK_CODE_INVALID_SOURCE_ADDRESS, new byte[] {});
@@ -174,6 +181,7 @@ public class StandardGateway
 			}
 			return;
 		}
+		
 		if (logger.isDebugEnabled()) {
 			logger.debug("Source address matches the registered source address");
 			logger.debug("Search for ECU which corresponding target address");
@@ -194,15 +202,19 @@ public class StandardGateway
 			}
 		}
 
+		// [DoIP-071] If target address is unknown then send negative acknowledgement
+		// with code 0x03.
 		if (targetEcu == null) {
 			logger.warn("Could not find a ECU with target address " + target);
 			DoipTcpDiagnosticMessageNegAck negAck = new DoipTcpDiagnosticMessageNegAck(target,
 					source, DoipTcpDiagnosticMessageNegAck.NACK_CODE_UNKNOWN_TARGET_ADDRESS, new byte[] {});
 			doipTcpConnection.send(negAck);
+			
 			if (logger.isTraceEnabled()) {
 				logger.trace(
 						"<<< void onDoipTcpDiagnosticMessage(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessage doipMessage)");
 			}
+			
 			return;
 		}
 
@@ -265,7 +277,7 @@ public class StandardGateway
 
 		StandardTcpConnection standardConnection = (StandardTcpConnection) doipTcpConnection;
 		int source = doipMessage.getSourceAddress();
-
+		
 		int activationType = doipMessage.getActivationType();
 		if (logger.isDebugEnabled()) {
 			logger.debug("Check activation type");
@@ -470,6 +482,8 @@ public class StandardGateway
 	public void onDoipUdpVehicleIdentRequest(DoipUdpVehicleIdentRequest doipMessage, DatagramPacket packet) {
 		logger.trace(
 				">>> public void onDoipUdpVehicleIdentRequest(DoipUdpVehicleIdentRequest doipMessage, DatagramPacket packet)");
+		
+		logger.info("Received DoIP UDP vehicle identification request -> will send DoIP UDP vehicle identification response");
 		DoipUdpVehicleAnnouncementMessage response = new DoipUdpVehicleAnnouncementMessage(config.getVin(),
 				config.getLogicalAddress(), config.getEid(), config.getGid(), 0, 0);
 		byte[] message = response.getMessage();
@@ -487,10 +501,16 @@ public class StandardGateway
 			DatagramPacket packet) {
 		logger.trace(
 				">>> public void onDoipUdpVehicleIdentRequestWithEid(DoipUdpVehicleIdentRequestWithEid doipMessage, DatagramPacket packet)");
-
+		
+		logger.info("Received DoIP UDP vehicle identification request with EID -> will check EID");
 		byte[] eid = doipMessage.getEid();
 		byte[] ownEid = this.config.getEid();
+		String eidAsString = Conversion.byteArrayToHexString(eid);
+		String ownEidAsString = Conversion.byteArrayToHexString(ownEid);
+		logger.debug("Received EID = " + eidAsString);
+		logger.debug("Own EID      = " + ownEidAsString);
 		if (Arrays.equals(eid, ownEid)) {
+			logger.info("EID matched -> will send DoIP UDP vehicle identification response");
 			DoipUdpVehicleAnnouncementMessage response = new DoipUdpVehicleAnnouncementMessage(config.getVin(),
 					config.getLogicalAddress(), config.getEid(), config.getGid(), 0, 0);
 			byte[] message = response.getMessage();
@@ -499,7 +519,10 @@ public class StandardGateway
 			} catch (IOException e) {
 				logger.error(Helper.getExceptionAsString(e));
 			}
+		} else {
+			logger.info("EID didn't match -> will not send a DoIP UDP vehicle identification response");
 		}
+			
 
 		logger.trace(
 				"<<< public void onDoipUdpVehicleIdentRequestWithEid(DoipUdpVehicleIdentRequestWithEid doipMessage, DatagramPacket packet)");
@@ -510,16 +533,16 @@ public class StandardGateway
 			DatagramPacket packet) {
 		logger.trace(
 				">>> public void onDoipUdpVehicleIdentRequestWithVin(DoipUdpVehicleIdentRequestWithVin doipMessage, DatagramPacket packet)");
-
+		
+		logger.info("Received DoIP UDP vehicle identification request with VIN -> will check VIN");
 		byte[] vin = doipMessage.getVin();
 		byte[] ownVin = this.config.getVin();
 		String receivedVinAsString = Conversion.byteArrayToHexString(vin);
 		String ownVinAsString = Conversion.byteArrayToHexString(ownVin);
-		logger.debug("Compare received VIN with own VIN");
 		logger.debug("Received VIN = " + receivedVinAsString);
 		logger.debug("Own VIN      = " + ownVinAsString);
 		if (Arrays.equals(vin, ownVin)) {
-			logger.debug("VINs are equal");
+			logger.info("VIN matched -> will send DoIP UDP vehicle identification response");
 			DoipUdpVehicleAnnouncementMessage response = new DoipUdpVehicleAnnouncementMessage(config.getVin(),
 					config.getLogicalAddress(), config.getEid(), config.getGid(), 0, 0);
 			byte[] message = response.getMessage();
@@ -529,7 +552,7 @@ public class StandardGateway
 				logger.error(Helper.getExceptionAsString(e));
 			}
 		} else {
-			logger.debug("VINs are not equal");
+			logger.info("VIN didn't match -> will not send a DoIP UDP vehicle identification response");
 		}
 
 		logger.trace(
