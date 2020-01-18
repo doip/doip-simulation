@@ -72,7 +72,7 @@ public class EcuConfig {
 	 */
 	public void loadUdsLookupTable() throws IOException {
 		String[] files = this.udsFiles.split(";");
-		this.udsLookupTable.appendPatterns(path, files);
+		this.udsLookupTable.addLookupEntriesFromFiles(path, files);
 	}
 
 	public void setFunctionalAddress(int functionalAddress) {

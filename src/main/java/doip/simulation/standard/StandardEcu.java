@@ -130,7 +130,7 @@ public class StandardEcu extends Ecu implements Runnable {
 		} else {
 			requestMessageShort = requestMessage;
 		}
-		byte[] response = this.getConfig().getUdsLookupTable().findResult(requestMessageShort);
+		byte[] response = this.getConfig().getUdsLookupTable().findResultAndApplyModifiers(requestMessageShort);
 		if (response != null) {
 			if (logger.isInfoEnabled()) {
 				logger.info("Found matching request pattern, response = "
