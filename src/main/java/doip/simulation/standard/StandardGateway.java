@@ -264,6 +264,8 @@ public class StandardGateway
 	}
 
 	/**
+	 * [DoIP-100] The DoIP entity shall process routing activation as specified
+	 * in figure 9.
 	 * Implements the routing activation handler according to figure 9 on page 31 of
 	 * the ISO 13400-2:2012.
 	 */
@@ -278,6 +280,12 @@ public class StandardGateway
 		StandardTcpConnection standardConnection = (StandardTcpConnection) doipTcpConnection;
 		int source = doipMessage.getSourceAddress();
 		
+		// TODO: Figure 9, first box with "Check if source address is know":
+		// What is a known source address?
+		
+		
+		// Figure 9, second box:
+		// Check if routing activation type is supported
 		int activationType = doipMessage.getActivationType();
 		if (logger.isDebugEnabled()) {
 			logger.debug("Check activation type");
@@ -286,8 +294,8 @@ public class StandardGateway
 			if (logger.isDebugEnabled()) {
 				logger.debug("Routing activation type is not supported");
 			}
-			DoipTcpRoutingActivationResponse doipResponse = new DoipTcpRoutingActivationResponse(source,
-					this.config.getLogicalAddress(), 0x06, -1);
+			DoipTcpRoutingActivationResponse doipResponse = 
+					new DoipTcpRoutingActivationResponse(source, this.config.getLogicalAddress(), 0x06, -1);
 			standardConnection.send(doipResponse);
 			standardConnection.stop();
 			if (logger.isTraceEnabled()) {
@@ -300,6 +308,7 @@ public class StandardGateway
 		if (logger.isDebugEnabled()) {
 			logger.debug("Routing activation type is supported");
 		}
+		
 		// Call socket handler which returns the response code.
 		// This can be positive result (0x10 = routing activation accepted) 
 		// or a negative result.
@@ -333,17 +342,32 @@ public class StandardGateway
 	 */
 	private int routingActivationSocketHandler(StandardTcpConnection connection,
 			DoipTcpRoutingActivationRequest routingActivationRequest) {
+		if (logger.isTraceEnabled()) {
+			logger.trace(">>> private int routingActivationSocketHandler(StandardTcpConnection connection, DoipTcpRoutingActivationRequest routingActivationRequest)");
+		}
+		
+		
 		int source = routingActivationRequest.getSourceAddress();
 		int count = getNumberOfRegisteredSockets();
 		if (count == 0) {
 			connection.setRegisteredSourceAddress(source);
+			connection.setState(StandardTcpConnection.STATE_REGISTERED_ROUTING_ACTIVE);	
+			if (logger.isTraceEnabled()) {
+				logger.trace("<<< private int routingActivationSocketHandler(StandardTcpConnection connection, DoipTcpRoutingActivationRequest routingActivationRequest)");
+			}
 			return 0x10;
 		}
 
 		if (connection.isRegistered()) {
 			if (source == connection.getRegisteredSourceAddress()) {
+				if (logger.isTraceEnabled()) {
+					logger.trace("<<< private int routingActivationSocketHandler(StandardTcpConnection connection, DoipTcpRoutingActivationRequest routingActivationRequest)");
+				}
 				return 0x10;
 			} else {
+				if (logger.isTraceEnabled()) {
+					logger.trace("<<< private int routingActivationSocketHandler(StandardTcpConnection connection, DoipTcpRoutingActivationRequest routingActivationRequest)");
+				}
 				return 0x02;
 			}
 		}
@@ -352,11 +376,24 @@ public class StandardGateway
 		if (alreadyRegisteredConnection != connection) {
 			// TODO: perform alive check
 			logger.error("Alive check not implemented");
+
+			if (logger.isTraceEnabled()) {
+				logger.trace("<<< private int routingActivationSocketHandler(StandardTcpConnection connection, DoipTcpRoutingActivationRequest routingActivationRequest)");
+			}
 			return 0x03;
 		}
 
 		// TODO: Check if we can accept more connections
+		
+		// Store source address
 		connection.setRegisteredSourceAddress(source);
+		
+		// Currently no authentication and confirmation is required
+		connection.setState(StandardTcpConnection.STATE_REGISTERED_ROUTING_ACTIVE);
+		
+		if (logger.isTraceEnabled()) {
+			logger.trace("<<< private int routingActivationSocketHandler(StandardTcpConnection connection, DoipTcpRoutingActivationRequest routingActivationRequest)");
+		}
 		return 0x10;
 	}
 
