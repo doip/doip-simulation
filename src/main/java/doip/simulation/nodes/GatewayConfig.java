@@ -164,7 +164,7 @@ public class GatewayConfig {
 	public void loadLookupTables() throws IOException {
 		logger.trace(">>> public void loadLookupTables() throws IOException");
 		// Load UDP lookup table
-		this.udpLookupTable = new LookupTable();
+		this.udpLookupTable = createLookupTable();
 		if (this.udpFiles != null) {
 			String[] files = this.udpFiles.split(";");
 			this.udpLookupTable.addLookupEntriesFromFiles(path, files);
@@ -177,6 +177,14 @@ public class GatewayConfig {
 			this.tcpLookupTable.addLookupEntriesFromFiles(path, files);
 		}
 		logger.trace("<<< public void loadLookupTables() throws IOException");
+	}
+	
+	/**
+	 * Creates a new empty lookup table
+	 * @return The new lookup table
+	 */
+	public LookupTable createLookupTable() {
+		return new LookupTable();
 	}
 
 	public void setEcuConfigList(LinkedList<EcuConfig> ecuConfigList) {
