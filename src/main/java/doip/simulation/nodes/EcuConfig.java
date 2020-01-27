@@ -58,11 +58,19 @@ public class EcuConfig {
 		this.functionalAddress = file.getOptionalPropertyAsInt("address.functional");
 		this.udsFiles = file.getOptionalPropertyAsString("uds.files");
 
-		this.udsLookupTable = new LookupTable();
+		this.udsLookupTable = createLookupTable();
 		
 		this.path = Helper.getPathOfFile(this.filename);
 		if (this.udsFiles != null)
 			loadUdsLookupTable();
+	}
+	
+	/**
+	 * Creates a new empty lookup table
+	 * @return The new lookup table
+	 */
+	public LookupTable createLookupTable() {
+		return new LookupTable();
 	}
 
 	/** 
