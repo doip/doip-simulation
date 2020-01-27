@@ -31,11 +31,17 @@ public class DoipTcpConnectionTest implements DoipTcpConnectionListener {
 	
 	private int onDoipTcpDiagnosticMessageCounter = 0;
 
+	private int onDoipTcpDiagnosticMessagePosAckCounter = 0;
+	
 	private int onDoipTcpDiagnosticMessageNegAckCounter = 0;
 	
 	private int onDoipTcpRoutingActivationRequestCounter = 0;
 
 	private int onDoipTcpRoutingActivationResponseCounter = 0;
+	
+	private DoipTcpDiagnosticMessage lastDoipTcpDiagnosticMessage = null;
+	
+	private DoipTcpDiagnosticMessagePosAck lastDoipTcpDiagnosticMessagePosAck = null;
 	
 	private DoipTcpDiagnosticMessageNegAck lastDoipTcpDiagnosticMessageNegAck = null;
 	
@@ -74,11 +80,16 @@ public class DoipTcpConnectionTest implements DoipTcpConnectionListener {
 		}
 		
 		this.onConnectionClosedCounter = 0;
+		
 		this.onDoipTcpDiagnosticMessageCounter = 0;
+		this.onDoipTcpDiagnosticMessagePosAckCounter = 0;
 		this.onDoipTcpDiagnosticMessageNegAckCounter = 0;
+		
 		this.onDoipTcpRoutingActivationRequestCounter = 0;
 		this.onDoipTcpRoutingActivationResponseCounter = 0;
 
+		this.lastDoipTcpDiagnosticMessage = null;
+		this.lastDoipTcpDiagnosticMessagePosAck = null;
 		this.lastDoipTcpDiagnosticMessageNegAck = null;
 		this.lastDoipTcpRoutingActivationRequest = null;
 		this.lastDoipTcpRoutingActivationResponse = null;
@@ -141,7 +152,7 @@ public class DoipTcpConnectionTest implements DoipTcpConnectionListener {
 		}
 		
 		this.onDoipTcpDiagnosticMessageCounter++;
-		// Inform Listeners
+		this.lastDoipTcpDiagnosticMessage = doipMessage;
 		this.onDoipTcpMessageReceived();
 		
 		if (logger.isTraceEnabled()) {
@@ -159,22 +170,27 @@ public class DoipTcpConnectionTest implements DoipTcpConnectionListener {
 		
 		this.onDoipTcpDiagnosticMessageNegAckCounter++;
 		this.lastDoipTcpDiagnosticMessageNegAck = doipMessage;
-		
-		// Call listeners
 		this.onDoipTcpMessageReceived();
 		
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public void onDoipTcpDiagnosticMessageNegAck(DoipTcpConnection doipTcpConnection,	DoipTcpDiagnosticMessageNegAck doipMessage)");
 		}
-		
-		
 	}
 
 	@Override
 	public void onDoipTcpDiagnosticMessagePosAck(DoipTcpConnection doipTcpConnection,
 			DoipTcpDiagnosticMessagePosAck doipMessage) {
-		// TODO Auto-generated method stub
+		if (logger.isTraceEnabled()) {
+			logger.trace(">>> public void onDoipTcpDiagnosticMessagePosAck(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessagePosAck doipMessage)");
+		}
 		
+		this.onDoipTcpDiagnosticMessagePosAckCounter++;
+		this.lastDoipTcpDiagnosticMessagePosAck = doipMessage;
+		this.onDoipTcpMessageReceived();
+		
+		if (logger.isTraceEnabled()) {
+			logger.trace("<<< public void onDoipTcpDiagnosticMessagePosAck(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessagePosAck doipMessage)");
+		}
 	}
 
 	@Override
@@ -251,10 +267,17 @@ public class DoipTcpConnectionTest implements DoipTcpConnectionListener {
 		return this.onConnectionClosedCounter;
 	}
 	
+	public int getOnDoipTcpDiagnosticMessageCounter() {
+		return onDoipTcpDiagnosticMessageCounter;
+	}
+	
+	public int getOnDoipTcpDiagnosticMessagePosAckCounter() {
+		return onDoipTcpDiagnosticMessagePosAckCounter;
+	}
+	
 	public int getOnDoipTcpDiagnosticMessageNegAckCounter() {
 		return onDoipTcpDiagnosticMessageNegAckCounter;
 	}
-
 	
 	public int getOnDoipTcpRoutingActivationRequestCounter() {
 		return this.onDoipTcpRoutingActivationRequestCounter;
@@ -264,8 +287,16 @@ public class DoipTcpConnectionTest implements DoipTcpConnectionListener {
 		return this.onDoipTcpRoutingActivationResponseCounter;
 	}
 	
+	public DoipTcpDiagnosticMessage getLastDoipTcpDiagnosticMessage() {
+		return this.lastDoipTcpDiagnosticMessage;
+	}
+	
 	public DoipTcpDiagnosticMessageNegAck getLastDoipTcpDiagnosticMessageNegAck() {
 		return this.lastDoipTcpDiagnosticMessageNegAck;
+	}
+	
+	public DoipTcpDiagnosticMessagePosAck getLastDoipTcpDiagnosticMessagePosAck() {
+		return this.lastDoipTcpDiagnosticMessagePosAck;
 	}
 	
 	public DoipTcpRoutingActivationResponse getLastDoipTcpRoutingActivationResponse() {
