@@ -10,10 +10,10 @@
 				%m is the log message.
 				%n is a new line character.			
 			 -->
-			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%-12t]  %-6level %-48logger - %msg%n" />
+			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%-16t]  %-6level %-56logger - %msg%n" />
 		</Console>
 		<File name="File" fileName="doip-simulation.log" append="false">
-			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%-12t]  %-6level %-48logger - %msg%n" />
+			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%-16t]  %-6level %-56logger - %msg%n" />
 		</File>
 	</Appenders>
 	<Loggers>
@@ -33,6 +33,11 @@
 		
 		<!-- Set log level for stream buffer -->
 		<Logger name="doip.library.util.StreamBuffer" level="warn" additivity="false">
+			<AppenderRef ref="Console" />
+			<AppenderRef ref="File" />
+		</Logger>
+		
+		<Logger name="doip.tester" level="trace" additivity="false">
 			<AppenderRef ref="Console" />
 			<AppenderRef ref="File" />
 		</Logger>
