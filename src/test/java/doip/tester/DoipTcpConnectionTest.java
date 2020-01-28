@@ -1,4 +1,4 @@
-package doip.simulation;
+package doip.tester;
 
 import java.net.Socket;
 import java.util.LinkedList;

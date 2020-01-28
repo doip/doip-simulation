@@ -1,4 +1,4 @@
-package doip.simulation;
+package doip.tester;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
