@@ -61,7 +61,7 @@ public class StandardGateway
 
 	private TcpServerThread tcpServerThread = null;
 
-	private LinkedList<StandardGatewayConnection> standardConnectionList = new LinkedList<StandardGatewayConnection>();
+	private LinkedList<StandardTcpConnectionGateway> standardConnectionList = new LinkedList<StandardTcpConnectionGateway>();
 
 	private LinkedList<Ecu> standardEcuList = new LinkedList<Ecu>();
 
@@ -77,13 +77,13 @@ public class StandardGateway
 	 * 
 	 * @return A StandardConnectionThread
 	 */
-	public StandardGatewayConnection createConnection() {
+	public StandardTcpConnectionGateway createConnection() {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> StandardConnection createStandardConnection()");
 		}
 
 		this.connectionInstanceCounter++;
-		StandardGatewayConnection standardConnection = new StandardGatewayConnection(
+		StandardTcpConnectionGateway standardConnection = new StandardTcpConnectionGateway(
 				config.getName() + ":TCP-RECV-" + this.connectionInstanceCounter, config.getMaxByteArraySizeLogging());
 
 		if (logger.isTraceEnabled()) {
@@ -106,7 +106,7 @@ public class StandardGateway
 			logger.error(Helper.getExceptionAsString(e));
 		}
 		
-		StandardGatewayConnection standardConnection = createConnection();
+		StandardTcpConnectionGateway standardConnection = createConnection();
 		standardConnection.addListener(this);
 		this.standardConnectionList.add(standardConnection);
 		standardConnection.start(socket);
@@ -137,7 +137,7 @@ public class StandardGateway
 				">>> public void onDoipTcpAliveCheckResponse(DoipTcpConnection doipTcpConnection, DoipTcpAliveCheckResponse doipMessage)");
 		logger.warn("No implementation");
 
-		StandardGatewayConnection standardConnection = (StandardGatewayConnection) doipTcpConnection;
+		StandardTcpConnectionGateway standardConnection = (StandardTcpConnectionGateway) doipTcpConnection;
 		standardConnection.setLastDoipTcpAliveCheckResponse(doipMessage);
 
 		logger.trace(
@@ -156,7 +156,7 @@ public class StandardGateway
 		// The parameter doipTcpConnection is instance of StandardConnection,
 		// because the StandardConnection had been created here or
 		// in a lower class. Therefore a type cast is always possible.
-		StandardGatewayConnection standardConnection = (StandardGatewayConnection) doipTcpConnection;
+		StandardTcpConnectionGateway standardConnection = (StandardTcpConnectionGateway) doipTcpConnection;
 
 		// Get the data out from the parameter "doipMessage".
 		int source = doipMessage.getSourceAddress();
@@ -277,7 +277,7 @@ public class StandardGateway
 					">>> public void onDoipTcpRoutingActivationRequest(DoipTcpConnection doipTcpConnection, DoipTcpRoutingActivationRequest doipMessage)");
 		}
 
-		StandardGatewayConnection standardConnection = (StandardGatewayConnection) doipTcpConnection;
+		StandardTcpConnectionGateway standardConnection = (StandardTcpConnectionGateway) doipTcpConnection;
 		int source = doipMessage.getSourceAddress();
 		
 		// TODO: Figure 9, first box with "Check if source address is know":
@@ -340,7 +340,7 @@ public class StandardGateway
 	 * @param routingActivationRequest
 	 * @return
 	 */
-	private int routingActivationSocketHandler(StandardGatewayConnection connection,
+	private int routingActivationSocketHandler(StandardTcpConnectionGateway connection,
 			DoipTcpRoutingActivationRequest routingActivationRequest) {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> private int routingActivationSocketHandler(StandardTcpConnection connection, DoipTcpRoutingActivationRequest routingActivationRequest)");
@@ -351,7 +351,7 @@ public class StandardGateway
 		int count = getNumberOfRegisteredSockets();
 		if (count == 0) {
 			connection.setRegisteredSourceAddress(source);
-			connection.setState(StandardGatewayConnection.STATE_REGISTERED_ROUTING_ACTIVE);	
+			connection.setState(StandardTcpConnectionGateway.STATE_REGISTERED_ROUTING_ACTIVE);	
 			if (logger.isTraceEnabled()) {
 				logger.trace("<<< private int routingActivationSocketHandler(StandardTcpConnection connection, DoipTcpRoutingActivationRequest routingActivationRequest)");
 			}
@@ -372,7 +372,7 @@ public class StandardGateway
 			}
 		}
 
-		StandardGatewayConnection alreadyRegisteredConnection = getRegisteredConnection(source);
+		StandardTcpConnectionGateway alreadyRegisteredConnection = getRegisteredConnection(source);
 		if (alreadyRegisteredConnection != connection) {
 			// TODO: perform alive check
 			logger.error("Alive check not implemented");
@@ -389,7 +389,7 @@ public class StandardGateway
 		connection.setRegisteredSourceAddress(source);
 		
 		// Currently no authentication and confirmation is required
-		connection.setState(StandardGatewayConnection.STATE_REGISTERED_ROUTING_ACTIVE);
+		connection.setState(StandardTcpConnectionGateway.STATE_REGISTERED_ROUTING_ACTIVE);
 		
 		if (logger.isTraceEnabled()) {
 			logger.trace("<<< private int routingActivationSocketHandler(StandardTcpConnection connection, DoipTcpRoutingActivationRequest routingActivationRequest)");
@@ -404,10 +404,10 @@ public class StandardGateway
 	 * @param source
 	 * @return
 	 */
-	public StandardGatewayConnection getRegisteredConnection(int source) {
-		Iterator<StandardGatewayConnection> iter = this.standardConnectionList.iterator();
+	public StandardTcpConnectionGateway getRegisteredConnection(int source) {
+		Iterator<StandardTcpConnectionGateway> iter = this.standardConnectionList.iterator();
 		while (iter.hasNext()) {
-			StandardGatewayConnection connection = iter.next();
+			StandardTcpConnectionGateway connection = iter.next();
 			if (connection.getRegisteredSourceAddress() == source) {
 				return connection;
 			}
@@ -422,9 +422,9 @@ public class StandardGateway
 	 */
 	public int getNumberOfRegisteredSockets() {
 		int count = 0;
-		Iterator<StandardGatewayConnection> iter = this.standardConnectionList.iterator();
+		Iterator<StandardTcpConnectionGateway> iter = this.standardConnectionList.iterator();
 		while (iter.hasNext()) {
-			StandardGatewayConnection connection = iter.next();
+			StandardTcpConnectionGateway connection = iter.next();
 			if (connection.isRegistered()) {
 				count++;
 			}
@@ -681,9 +681,9 @@ public class StandardGateway
 		// Find the "StandardConnection" on which the message need to
 		// get send out.
 		boolean found = false;
-		Iterator<StandardGatewayConnection> iter = this.standardConnectionList.iterator();
+		Iterator<StandardTcpConnectionGateway> iter = this.standardConnectionList.iterator();
 		while (iter.hasNext()) {
-			StandardGatewayConnection standardConnection = iter.next();
+			StandardTcpConnectionGateway standardConnection = iter.next();
 			if (standardConnection.getRegisteredSourceAddress() == target) {
 				found = true;
 				DoipTcpDiagnosticMessage doipMessage = new DoipTcpDiagnosticMessage(source, target, diagnosticMessage);
@@ -817,9 +817,9 @@ public class StandardGateway
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public void stopConnections()");
 		}
-		Iterator<StandardGatewayConnection> iter = this.standardConnectionList.iterator();
+		Iterator<StandardTcpConnectionGateway> iter = this.standardConnectionList.iterator();
 		while (iter.hasNext()) {
-			StandardGatewayConnection connection = iter.next();
+			StandardTcpConnectionGateway connection = iter.next();
 			connection.stop();
 		}
 		if (logger.isTraceEnabled()) {
