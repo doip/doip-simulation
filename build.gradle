@@ -14,7 +14,7 @@ repositories {
 }
 
 dependencies {
-	implementation 'com.github.doip:doip-library:1.1.1'
+	implementation 'com.github.doip:doip-library:1.1.2-beta'
 	implementation 'com.github.doip:doip-logging:1.1.7'
 	testImplementation 'com.github.doip:doip-junit:1.0.9'
 	testImplementation 'junit:junit:4.12'
