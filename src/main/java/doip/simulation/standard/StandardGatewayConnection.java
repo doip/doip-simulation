@@ -1,6 +1,5 @@
 package doip.simulation.standard;
 
-import java.io.IOException;
 import java.net.Socket;
 
 import doip.library.comm.DoipTcpConnection;
@@ -19,7 +18,7 @@ import doip.library.message.DoipTcpAliveCheckResponse;
  * @author Marco Wehnert
  *
  */
-public class StandardTcpConnection extends DoipTcpConnection {
+public class StandardGatewayConnection extends DoipTcpConnection {
 
 	public static final int STATE_SOCKET_NOT_ASSIGNED = 0;
 	public static final int STATE_SOCKET_INITIALIZED = 1;
@@ -38,7 +37,7 @@ public class StandardTcpConnection extends DoipTcpConnection {
 
 	private DoipTcpAliveCheckResponse lastDoipTcpAliveCheckResponse = null;
 
-	public StandardTcpConnection(String tcpReceiverThreadName, int maxByteArraySizeLogging) {
+	public StandardGatewayConnection(String tcpReceiverThreadName, int maxByteArraySizeLogging) {
 		super(tcpReceiverThreadName, maxByteArraySizeLogging);
 	}
 
