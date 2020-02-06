@@ -68,6 +68,19 @@ public class StandardGateway
 	private int connectionInstanceCounter = 0;
 
 	public StandardGateway(GatewayConfig config) {
+		if (config.getName() == null) {
+			throw new IllegalArgumentException("The name of the gateway is null");
+		}
+		if (config.getLocalPort() <= 0) {
+			throw new IllegalArgumentException("The local port for DoIP is invalid, it must be greater than 0");
+		}
+		if (config.getMaxByteArraySizeLogging() < 0) {
+			throw new IllegalArgumentException("The value of 'maxByteArraySizeLogging' is negative, it must be greater or equal than 0");
+		}
+		if (config.getMaxByteArraySizeLookup() < 0) {
+			throw new IllegalArgumentException("The value of 'maxByteArraySizeLookup' in class GatewayConfig is negative, it must be greater or equal than 0");
+		}
+		
 		this.config = config;
 	}
 
