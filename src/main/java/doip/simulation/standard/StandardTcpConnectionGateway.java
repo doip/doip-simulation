@@ -18,7 +18,7 @@ import doip.library.message.DoipTcpAliveCheckResponse;
  * @author Marco Wehnert
  *
  */
-public class StandardGatewayConnection extends DoipTcpConnection {
+public class StandardTcpConnectionGateway extends DoipTcpConnection {
 
 	public static final int STATE_SOCKET_NOT_ASSIGNED = 0;
 	public static final int STATE_SOCKET_INITIALIZED = 1;
@@ -37,7 +37,7 @@ public class StandardGatewayConnection extends DoipTcpConnection {
 
 	private DoipTcpAliveCheckResponse lastDoipTcpAliveCheckResponse = null;
 
-	public StandardGatewayConnection(String tcpReceiverThreadName, int maxByteArraySizeLogging) {
+	public StandardTcpConnectionGateway(String tcpReceiverThreadName, int maxByteArraySizeLogging) {
 		super(tcpReceiverThreadName, maxByteArraySizeLogging);
 	}
 
