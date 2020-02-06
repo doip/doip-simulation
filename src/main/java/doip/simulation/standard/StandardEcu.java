@@ -71,7 +71,8 @@ public class StandardEcu extends Ecu implements Runnable {
 		}
 
 		boolean ret = false;
-		ret = processUdsMessageByFunction(request);
+		
+		ret = processUdsMessageBeforeLookupTable(request);
 		if (ret) {
 			if (logger.isTraceEnabled()) {
 				logger.trace("<<< public void onUdsMessageReceived(UdsMessage request)");
@@ -85,7 +86,7 @@ public class StandardEcu extends Ecu implements Runnable {
 			}
 			return;
 		}
-		processUdsMessageByMessageInterpretation(request);
+		processUdsMessageAfterLookupTable(request);
 
 		if (logger.isTraceEnabled()) {
 			logger.trace("<<< public void onUdsMessageReceived(UdsMessage request)");
@@ -101,7 +102,7 @@ public class StandardEcu extends Ecu implements Runnable {
 	 * @return returns true if the request had been handled and no further
 	 *         processing is required.
 	 */
-	public boolean processUdsMessageByFunction(UdsMessage udsRequest) {
+	public boolean processUdsMessageBeforeLookupTable(UdsMessage udsRequest) {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public boolean processUdsMessageByFunction(UdsMessage request)");
 		}
@@ -159,7 +160,7 @@ public class StandardEcu extends Ecu implements Runnable {
 	 * @param request The received UDS request message.
 	 * @return
 	 */
-	public boolean processUdsMessageByMessageInterpretation(UdsMessage request) {
+	public boolean processUdsMessageAfterLookupTable(UdsMessage request) {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public void processUdsMessageByMessageInterpretation(UdsMessage request)");
 		}
