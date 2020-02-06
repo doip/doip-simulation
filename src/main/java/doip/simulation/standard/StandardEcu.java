@@ -141,6 +141,7 @@ public class StandardEcu extends Ecu implements Runnable {
 					UdsMessage.PHYSICAL, response);
 			
 			this.onSendUdsMessage(udsResponse);
+			this.setCurrentRequest(null);
 			ret = true;
 		} else {
 			if (logger.isInfoEnabled()) {
@@ -158,7 +159,7 @@ public class StandardEcu extends Ecu implements Runnable {
 	 * implementation sends a negative response with NRC 0x10 (general reject).
 	 * 
 	 * @param request The received UDS request message.
-	 * @return
+	 * @return Returns true if the message had been handled
 	 */
 	public boolean processUdsMessageAfterLookupTable(UdsMessage request) {
 		if (logger.isTraceEnabled()) {
@@ -176,12 +177,13 @@ public class StandardEcu extends Ecu implements Runnable {
 				responseMessage);
 		
 		this.onSendUdsMessage(response);
+		this.setCurrentRequest(null);
 
 		if (logger.isTraceEnabled()) {
 			logger.trace("<<< public void processUdsMessageByMessageInterpretation(UdsMessage request)");
 		}
 		
-		return false;
+		return true;
 	}
 
 	@Override
@@ -202,11 +204,16 @@ public class StandardEcu extends Ecu implements Runnable {
 		// Don't log function entry and exit! It would be called every millisecond.
 		
 		if (this.busyFlag) {
+			
+			// Found potential bug: If busy Flag is set the  the current request
+			// is still the old request. The service ID shall be the SID from the
+			// new request. 
 			UdsMessage request = this.getCurrentRequest();
 			byte sid = request.getMessage()[0];
 			UdsMessage response = new UdsMessage(this.getConfig().getPhysicalAddress(), request.getSourceAdrress(),
 					UdsMessage.PHYSICAL, new byte[] { 0x7F, sid, 0x21 });
 			this.onSendUdsMessage(response);
+			this.setCurrentRequest(null);
 			this.busyFlag = false;
 		}
 
@@ -218,14 +225,16 @@ public class StandardEcu extends Ecu implements Runnable {
 			}
 			onUdsMessageReceived(currentRequest);
 		}
-		
-		this.setCurrentRequest(null);
 	}
 
 	private void setCurrentRequest(UdsMessage currentRequest) {
 		this.currentRequest = currentRequest;
 	}
 
+	/**
+	 * Simple wrapper for Thread.sleep(int)
+	 * @param millis The time to sleep in milliseconds.
+	 */
 	private void sleep(int millis) {
 		try {
 			Thread.sleep(millis);
