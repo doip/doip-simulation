@@ -7,7 +7,7 @@ import doip.simulation.standard.StandardEcu;
 public class BusyEcu extends StandardEcu {
 
 	@Override
-	public boolean processUdsMessageAfterLookupTable(UdsMessage request) {
+	public boolean processRequestAfterLookupTable(UdsMessage request) {
 		
 		// Send back only one response pending and don't clear
 		// the current diagnostic request message

@@ -9,19 +9,50 @@ import doip.simulation.nodes.EcuConfig;
 import doip.library.message.UdsMessage;
 import doip.library.util.Conversion;
 import doip.library.util.Helper;
+import doip.library.util.LookupTable;
 
+/**
+ * Implements the standard behavior of an ECU. The ECU is implemented as a
+ * thread and needs to be started with the function "start()" and can be stopped
+ * with the function "stop()". A new request can be hand over to the ECU with
+ * the function "putRequest(...)".
+ */
 public class StandardEcu extends Ecu implements Runnable {
 
 	private static Logger logger = LogManager.getLogger(StandardEcu.class);
 
+	/**
+	 * The current request which will be processed by the ECU. In case the ECU
+	 * is not busy a new request will also be stored in this variable.
+	 * 
+	 */
 	private volatile UdsMessage currentRequest = null;
 
+	/**
+	 * The message processing is implemented as a thread. This thread will be
+	 * stored in this variable.
+	 */
 	private volatile Thread thread = null;
 
+	/**
+	 * Flag if the thread shall run. When function "stop()" will be called the
+	 * flag will be set to false and the thread returns from his "run" function
+	 */
 	private volatile boolean runFlag = false;
 
-	private volatile boolean busyFlag = false;
+	/**
+	 * Flag to store the information if the ECU is busy which means that there
+	 * is still a request which the ECU is processing at the moment. When the
+	 * ECU has finished processing the current request the ECU must call the
+	 * function "clearCurrentRequest()".
+	 */
+	private volatile boolean isBusy = false;
 
+	/**
+	 * Constructor
+	 * 
+	 * @param config The configuration for this ECU
+	 */
 	public StandardEcu(EcuConfig config) {
 		super(config);
 		if (logger.isTraceEnabled()) {
@@ -32,130 +63,240 @@ public class StandardEcu extends Ecu implements Runnable {
 	}
 
 	/**
-	 * Will be called from outside to handle a new request. The implementation here
-	 * stores the new request in a local variable and returns immediately. The
-	 * request will be handled later by the thread of the ECU. If there is still a
-	 * request stored locally which had not been handled "busy" variable will be set
-	 * to indicate that later in the thread of the ECU a negative response with NRC
-	 * 0x21 (busy, repeat request) should be send.
+	 * Shall be called from outside to handle a new request.
 	 * 
 	 * @param request The new request.
 	 */
-	public synchronized void dropRequest(UdsMessage request) {
-		logger.trace(">>> public void dropRequest(UdsMessage message)");
-		if (this.getCurrentRequest() == null) {
+	public synchronized void putRequest(UdsMessage request) {
+		logger.trace(">>> public void putRequest(UdsMessage message)");
+
+		if (isBusy) {
+			logger.info(
+					"ECU is busy, request can not be queued for processing");
+			this.handleRequestIfBusy(request);
+		} else {
 			this.setCurrentRequest(request);
 			logger.info("UDS request queued for processing");
-		} else {
-			this.busyFlag = true;
 		}
-		logger.trace("<<< public void dropRequest(UdsMessage message)");
+
+		logger.trace("<<< public void putRequest(UdsMessage message)");
 	}
 
-	private UdsMessage getCurrentRequest() {
+	/**
+	 * Handles a request in case the ECU is still processing the last request.
+	 * Will be called by function "putRequest(...)".
+	 * 
+	 * @param request
+	 */
+	public void handleRequestIfBusy(UdsMessage request) {
+		if (logger.isTraceEnabled()) {
+			logger.trace(
+					">>> public void handleRequestIfBusy(UdsMessage request)");
+		}
+
+		// Send busy repeat request
+		byte[] response = new byte[] { 0x7F, request.getMessage()[0], 0x21 };
+		UdsMessage udsMsg = new UdsMessage(
+				this.getConfig().getPhysicalAddress(),
+				request.getSourceAdrress(), response);
+		this.onSendUdsMessage(udsMsg);
+
+		if (logger.isTraceEnabled()) {
+			logger.trace(
+					"<<< public void handleRequestIfBusy(UdsMessage request)");
+		}
+	}
+
+	/**
+	 * Getter for the current request which will be processed at the moment.
+	 * 
+	 * @return
+	 */
+	private synchronized UdsMessage getCurrentRequest() {
 		return currentRequest;
 	}
 
 	/**
-	 * Will be called by the thread of the ECU when a new request had been received.
+	 * Sets the current request.
 	 * 
-	 * @param request The new request which had been received.
+	 * @param currentRequest
 	 */
-	public void onUdsMessageReceived(UdsMessage request) {
+	private synchronized void setCurrentRequest(UdsMessage currentRequest) {
+		this.currentRequest = currentRequest;
+	}
+
+	/**
+	 * Clears the current request (which means that current request will be set
+	 * to null) and clears the "isBusy" flag. After calling this function the
+	 * ECU is ready to receive new requests.
+	 */
+	private synchronized void clearCurrentRequest() {
 		if (logger.isTraceEnabled()) {
-			logger.trace(">>> public void onUdsMessageReceived(UdsMessage request)");
+			logger.trace(">>> private synchronized void clearCurrentRequest()");
+		}
+
+		logger.info(
+				"Processing of request finished, ready to receive new request");
+
+		this.currentRequest = null;
+		this.isBusy = false;
+
+		if (logger.isTraceEnabled()) {
+			logger.trace("<<< private synchronized void clearCurrentRequest()");
+		}
+	}
+
+	/**
+	 * Will be called by the thread of the ECU when a new request had been
+	 * received. It calls the functions
+	 * <ol>
+	 * <li>processRequestBeforeLookupTable</li>
+	 * <li>processRequestByLookupTable</li>
+	 * <li>processRequestAfterLookupTable</li>
+	 * </ol>
+	 * 
+	 * If one of these functions returns true processing is finished and the
+	 * next functions will not be called any more.
+	 * 
+	 * @param request The new request which shall be processed
+	 */
+	public void handleRequest(UdsMessage request) {
+		if (logger.isTraceEnabled()) {
+			logger.trace(
+					">>> public void onRequestReceived(UdsMessage request)");
 		}
 
 		if (logger.isDebugEnabled()) {
-			logger.info("UDS request, data = " + Conversion.byteArrayToHexStringShortDotted(request.getMessage(), 16));
+			logger.info("UDS request, data = "
+					+ Conversion.byteArrayToHexStringShortDotted(
+							request.getMessage(), 16));
 		}
 
 		boolean ret = false;
-		
-		ret = processUdsMessageBeforeLookupTable(request);
+
+		ret = processRequestBeforeLookupTable(request);
+
 		if (ret) {
 			if (logger.isTraceEnabled()) {
-				logger.trace("<<< public void onUdsMessageReceived(UdsMessage request)");
+				logger.trace(
+						"<<< public void onRequestReceived(UdsMessage request)");
 			}
 			return;
 		}
-		ret = processUdsMessageByLookupTable(request);
+
+		ret = processRequestByLookupTable(request);
+
 		if (ret) {
 			if (logger.isTraceEnabled()) {
-				logger.trace("<<< public void onUdsMessageReceived(UdsMessage request)");
+				logger.trace(
+						"<<< public void onRequestReceived(UdsMessage request)");
 			}
 			return;
 		}
-		processUdsMessageAfterLookupTable(request);
+
+		processRequestAfterLookupTable(request);
 
 		if (logger.isTraceEnabled()) {
-			logger.trace("<<< public void onUdsMessageReceived(UdsMessage request)");
+			logger.trace(
+					"<<< public void onRequestReceived(UdsMessage request)");
 		}
 	}
 
 	/**
 	 * Will be called to handle the request with some "special" handling. The
-	 * function here has no implementation, it is supposed to get overridden by a
-	 * child class to realize some special handling or behavior.
+	 * function here has no implementation, it is supposed to get overridden by
+	 * a child class to realize some special handling or behavior.
 	 * 
 	 * @param udsRequest The new request
 	 * @return returns true if the request had been handled and no further
 	 *         processing is required.
 	 */
-	public boolean processUdsMessageBeforeLookupTable(UdsMessage udsRequest) {
+	public boolean processRequestBeforeLookupTable(UdsMessage udsRequest) {
 		if (logger.isTraceEnabled()) {
-			logger.trace(">>> public boolean processUdsMessageByFunction(UdsMessage request)");
+			logger.trace(
+					">>> public boolean processRequestBeforeLookupTable(UdsMessage request)");
 		}
 
 		if (logger.isTraceEnabled()) {
-			logger.trace("<<< public boolean processUdsMessageByFunction(UdsMessage request)");
+			logger.trace(
+					"<<< public boolean processRequestBeforeLookupTable(UdsMessage request)");
 		}
 		return false;
 	}
 
 	/**
-	 * Will process a UDS message by finding a matching pattern in the lookup table.
+	 * Will process a UDS request by finding a matching request pattern in the
+	 * lookup table. If a request pattern matches it will send the response and
+	 * clear the request to be ready to receive a new request.
 	 * 
-	 * @param request
-	 * @return
+	 * @param request The UDS request message
+	 * 
+	 * @return Returns true if a matching request could be found in the lookup
+	 *         table and a response had been sent back to the tester. If no
+	 *         matching request pattern could be found the function returns
+	 *         false to indicate that further processing of this request needs
+	 *         to be done.
 	 */
-	public boolean processUdsMessageByLookupTable(UdsMessage request) {
+	public boolean processRequestByLookupTable(UdsMessage request) {
 		if (logger.isTraceEnabled()) {
-			logger.trace(">>> public boolean processUdsMessageByLookupTable(UdsMessage request)");
+			logger.trace(
+					">>> public boolean processRequestByLookupTable(UdsMessage request)");
 		}
-		
-		if (this.getConfig().getUdsLookupTable() == null) {
+
+		LookupTable lookupTable = this.getConfig().getUdsLookupTable();
+
+		if (lookupTable == null) {
 			logger.info("No UDS lookup table defined");
+			if (logger.isTraceEnabled()) {
+				logger.trace(
+						"<<< public boolean processRequestByLookupTable(UdsMessage request)");
+			}
 			return false;
 		}
-		
+
 		boolean ret = false;
+
 		byte[] requestMessage = request.getMessage();
 		byte[] requestMessageShort = null;
+
+		// TODO: Use parameter maxByteArraySizeLookup instead of fixed value of
+		// 16
 		if (requestMessage.length > 16) {
 			requestMessageShort = Arrays.copyOf(requestMessage, 16);
 		} else {
 			requestMessageShort = requestMessage;
 		}
-		byte[] response = this.getConfig().getUdsLookupTable().findResultAndApplyModifiers(requestMessageShort);
+
+		byte[] response = lookupTable
+				.findResultAndApplyModifiers(requestMessageShort);
+
 		if (response != null) {
 			if (logger.isInfoEnabled()) {
+				// TODO: Use parameter maxByteArraySizeLogging instead of fixed
+				// value of 64
 				logger.info("Found matching request pattern, response = "
-						+ Conversion.byteArrayToHexStringShortDotted(response, 64));
+						+ Conversion.byteArrayToHexStringShortDotted(response,
+								64));
 			}
-			UdsMessage udsResponse = new UdsMessage(this.getConfig().getPhysicalAddress(), request.getSourceAdrress(),
-					UdsMessage.PHYSICAL, response);
-			
+
+			UdsMessage udsResponse = new UdsMessage(
+					/* source address */ this.getConfig().getPhysicalAddress(),
+					/* target address */ request.getSourceAdrress(),
+					/* response */ UdsMessage.PHYSICAL, response);
+
+			this.clearCurrentRequest();
 			this.onSendUdsMessage(udsResponse);
-			this.setCurrentRequest(null);
+
 			ret = true;
+
 		} else {
 			if (logger.isInfoEnabled()) {
 				logger.info("Could not find a matching request pattern");
 			}
 		}
 		if (logger.isTraceEnabled()) {
-			logger.trace("<<< public boolean processUdsMessageByLookupTable(UdsMessage request)");
+			logger.trace(
+					"<<< public boolean processRequestByLookupTable(UdsMessage request)");
 		}
 		return ret;
 	}
@@ -167,28 +308,32 @@ public class StandardEcu extends Ecu implements Runnable {
 	 * @param request The received UDS request message.
 	 * @return Returns true if the message had been handled
 	 */
-	public boolean processUdsMessageAfterLookupTable(UdsMessage request) {
+	public boolean processRequestAfterLookupTable(UdsMessage request) {
 		if (logger.isTraceEnabled()) {
-			logger.trace(">>> public void processUdsMessageByMessageInterpretation(UdsMessage request)");
+			logger.trace(
+					">>> public void processUdsMessageByMessageInterpretation(UdsMessage request)");
 		}
-		int source = request.getSourceAdrress();
+
+		int sourceAddress = request.getSourceAdrress();
 		byte[] requestMessage = request.getMessage();
 		byte[] responseMessage = new byte[] { 0x7F, 0x00, 0x10 };
-		
+
 		if (requestMessage.length > 0) {
 			responseMessage[1] = requestMessage[0];
 		}
-		
-		UdsMessage response = new UdsMessage(this.getConfig().getPhysicalAddress(), source, UdsMessage.PHYSICAL,
-				responseMessage);
-		
+
+		UdsMessage response = new UdsMessage(
+				this.getConfig().getPhysicalAddress(), sourceAddress,
+				UdsMessage.PHYSICAL, responseMessage);
+
+		this.clearCurrentRequest();
 		this.onSendUdsMessage(response);
-		this.setCurrentRequest(null);
 
 		if (logger.isTraceEnabled()) {
-			logger.trace("<<< public void processUdsMessageByMessageInterpretation(UdsMessage request)");
+			logger.trace(
+					"<<< public void processUdsMessageByMessageInterpretation(UdsMessage request)");
 		}
-		
+
 		return true;
 	}
 
@@ -197,56 +342,56 @@ public class StandardEcu extends Ecu implements Runnable {
 		logger.trace(">>> public void run()");
 
 		while (this.runFlag) {
-
-			handleRequest();
+			checkAndHandleNewRequest();
 			sleep(1);
 		}
 
 		logger.trace("<<< public void run()");
 	}
 
-	private synchronized void handleRequest() {
+	/**
+	 * Checks if a new request is available and handles the new request.
+	 */
+	protected synchronized void checkAndHandleNewRequest() {
 
-		// Don't log function entry and exit! It would be called every millisecond.
-		
-		if (this.busyFlag) {
-			
-			// Found potential bug: If busy Flag is set the  the current request
-			// is still the old request. The service ID shall be the SID from the
-			// new request. 
-			UdsMessage request = this.getCurrentRequest();
-			byte sid = request.getMessage()[0];
-			UdsMessage response = new UdsMessage(this.getConfig().getPhysicalAddress(), request.getSourceAdrress(),
-					UdsMessage.PHYSICAL, new byte[] { 0x7F, sid, 0x21 });
-			this.onSendUdsMessage(response);
-			this.setCurrentRequest(null);
-			this.busyFlag = false;
-		}
+		// Don't log function entry and exit! It would be called every
+		// millisecond.
 
-		UdsMessage currentRequest = this.getCurrentRequest();
-		
-		if (currentRequest != null) {
-			if (logger.isInfoEnabled()) {
-				logger.info("Picked up new request to handle it");
+		if (isBusy == false) {
+
+			// Check if there is a new request
+			UdsMessage currentRequest = this.getCurrentRequest();
+			if (currentRequest != null) {
+
+				// Now ECU is busy with processing the new request
+				this.isBusy = true;
+				if (logger.isInfoEnabled()) {
+					logger.info("Picked up new request to handle it");
+				}
+				this.handleRequest(currentRequest);
 			}
-			onUdsMessageReceived(currentRequest);
 		}
-	}
-
-	private void setCurrentRequest(UdsMessage currentRequest) {
-		this.currentRequest = currentRequest;
 	}
 
 	/**
-	 * Simple wrapper for Thread.sleep(int)
+	 * Simple wrapper for Thread.sleep(int). If the thread will be interrupted a
+	 * log message with level FATAL will be logged.
+	 * 
 	 * @param millis The time to sleep in milliseconds.
+	 * @return Returns true if the thread did sleep time. Returns false if the
+	 *         thread had been interrupted.
 	 */
-	private void sleep(int millis) {
+	// TODO: Move this function to a new base class "DoipThread"
+	protected boolean sleep(int millis) {
 		try {
 			Thread.sleep(millis);
+			return true;
 		} catch (InterruptedException e) {
-			logger.debug(Helper.getExceptionAsString(e));
+			logger.fatal(
+					"The function Thread.sleep(millis) had been unexpectly interrupted.");
+			logger.fatal(Helper.getExceptionAsString(e));
 		}
+		return false;
 	}
 
 	@Override
