@@ -236,7 +236,7 @@ public class StandardGateway
 				source, 0x00, new byte[] {});
 		doipTcpConnection.send(posAck);
 		UdsMessage request = new UdsMessage(source, target, UdsMessage.PHYSICAL, diagnosticMessage);
-		targetEcu.dropRequest(request);
+		targetEcu.putRequest(request);
 
 		if (logger.isTraceEnabled()) {
 			logger.trace(
