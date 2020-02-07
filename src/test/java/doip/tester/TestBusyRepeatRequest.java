@@ -4,6 +4,7 @@ import static doip.junit.Assert.*;
 
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -13,10 +14,14 @@ import org.junit.Test;
 
 import doip.junit.Assert;
 import doip.library.comm.DoipTcpConnection;
+import doip.library.message.DoipTcpDiagnosticMessage;
 import doip.library.message.DoipTcpRoutingActivationRequest;
+import doip.library.message.DoipTcpRoutingActivationResponse;
 import doip.library.timer.NanoTimer;
+import doip.library.util.Helper;
 import doip.logging.LogManager;
 import doip.logging.Logger;
+import doip.simulation.nodes.EcuConfig;
 import doip.simulation.nodes.GatewayConfig;
 import doip.simulation.standard.StandardGateway;
 
@@ -53,15 +58,24 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public static void setUpBeforeClass()");
 		
-		
-		config = new GatewayConfig();
-		config.setName("GW");
-		config.setLocalPort(13400);
-		config.setMaxByteArraySizeLogging(64);
-		config.setMaxByteArraySizeLookup(64);
-		gateway = new StandardGateway(config);
-		gateway.start();
-		
+		try {
+			config = new GatewayConfig();
+			config.setName("GW");
+			config.setLocalPort(13400);
+			config.setMaxByteArraySizeLogging(64);
+			config.setMaxByteArraySizeLookup(64);
+			
+			List<EcuConfig> ecuConfigList = config.getEcuConfigList();
+			EcuConfig ecuConfig = new EcuConfig();
+			ecuConfig.setPhysicalAddress(815);
+			ecuConfig.setName("ECU");
+			ecuConfigList.add(ecuConfig);
+			
+			gateway = new BusyGateway(config);
+			gateway.start();
+		} catch (Exception e) {
+			logger.error(Helper.getExceptionAsString(e));
+		}
 		logger.info("<<< public static void setUpBeforeClass()");
 		logger.info("-----------------------------------------------------------------------------");
 	}
@@ -71,9 +85,13 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public static void tearDownAfterClass()");
 		
-		if (gateway != null) {
-			gateway.stop();
-			gateway = null;
+		try {
+			if (gateway != null) {
+				gateway.stop();
+				gateway = null;
+			}
+		} catch (Exception e) {
+			logger.error(Helper.getExceptionAsString(e));
 		}
 
 		logger.info("<<< public static void tearDownAfterClass()");
@@ -85,12 +103,15 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public void setUp()");
 		
-		connTest = new DoipTcpConnectionTest();
-		connTest.addListener(this);
-		InetAddress localhost = InetAddress.getLocalHost();
-		Socket tcpSocket = new Socket(localhost, 13400);
-		connTest.start(tcpSocket);
-
+		try {
+			connTest = new DoipTcpConnectionTest();
+			connTest.addListener(this);
+			InetAddress localhost = InetAddress.getLocalHost();
+			Socket tcpSocket = new Socket(localhost, 13400);
+			connTest.start(tcpSocket);
+		} catch (Exception e) {
+			logger.error(Helper.getExceptionAsString(e));
+		}
 		logger.info("<<< public void setUp()");
 		logger.info("-----------------------------------------------------------------------------");
 	}
@@ -100,10 +121,14 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public void tearDown()");
 		
-		if (connTest != null) {
-			connTest.stop();
-			connTest.removeListener(this);
-			connTest = null;
+		try {
+			if (connTest != null) {
+				connTest.stop();
+				connTest.removeListener(this);
+				connTest = null;
+			}
+		} catch (Exception e) {
+			logger.error(Helper.getExceptionAsString(e));
 		}
 		
 		logger.info("<<< public void tearDown()");
@@ -114,9 +139,23 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 	public void testBusyRepeatRequest() {
 		logger.info("#############################################################################");
 		logger.info(">>> testBusyRepeatRequest()");
-		
-		performRoutingActivation();
-		
+	
+		try {
+			performRoutingActivation();
+			
+			DoipTcpDiagnosticMessage requestA = new DoipTcpDiagnosticMessage(0xFF00, 815, new byte[] { 0x10, 0x02 });
+			DoipTcpDiagnosticMessage requestB = new DoipTcpDiagnosticMessage(0xFF00, 815, new byte[] { 0x31, 0x01, 0x02, 0x03 });
+			
+			byte[] twoRequests = Helper.concat(requestA.getMessage(), requestB.getMessage());
+			
+			this.messageCounter = 0;
+			DoipTcpConnection conn = connTest.getDoipTcpConnection();
+			conn.send(twoRequests);
+					
+			this.waitForMessageReceived(1000, 4);
+		} catch (Exception e) {
+			logger.error(Helper.getExceptionAsString(e));
+		}
 		logger.info("<<< testBusyRepeatRequest()");
 		logger.info("#############################################################################");
 	}
@@ -128,6 +167,10 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 		this.messageCounter = 0;
 		boolean ret = this.waitForMessageReceived(1000, 1);
 		Assert.assertTrue("Did not receive any response on routing activation request", ret);
+		DoipTcpRoutingActivationResponse response = connTest.getLastDoipTcpRoutingActivationResponse();
+		Assert.assertNotNull("Did not receive a routing activation response", response);
+		int responseCode = response.getResponseCode();
+		Assert.assertEquals("The response code in routing activation response",  0x10, responseCode);
 		return true;
 	}
 	

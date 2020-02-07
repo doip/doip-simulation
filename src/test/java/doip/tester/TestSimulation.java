@@ -94,7 +94,9 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public void setUp()");
 		
-	this.testThread = Thread.currentThread();
+		sleep(100);
+		
+		this.testThread = Thread.currentThread();
 		
 		udpSocket = new DatagramSocket(13401);
 		doipUdpMessageHandlerTest = new DoipUdpMessageHandlerTest();
@@ -106,6 +108,8 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		doipTcpConnectionTest.addListener(this);
 		doipTcpConnectionTest.start(tcpSocket);
 		
+		sleep(100);
+		
 		logger.info("<<< public void setUp()");
 		logger.info("-----------------------------------------------------------------------------");
 	}
@@ -114,6 +118,8 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 	public void tearDown() throws Exception {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public void tearDown()");
+		
+		sleep(100);
 		
 		if (doipUdpMessageHandlerTest != null) {
 			doipUdpMessageHandlerTest.stop();
@@ -126,6 +132,8 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 			doipTcpConnectionTest.removeListener(this);
 			doipTcpConnectionTest = null;
 		}
+		
+		sleep(100);
 		
 		logger.info("<<< public void tearDown()");
 		logger.info("-----------------------------------------------------------------------------");

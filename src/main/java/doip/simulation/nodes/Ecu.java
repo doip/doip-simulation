@@ -20,6 +20,9 @@ public abstract class Ecu {
 	private LinkedList<EcuListener> listeners = new LinkedList<EcuListener>();
 
 	public Ecu(EcuConfig config) {
+		if (config.getName() == null) {
+			throw new IllegalArgumentException("The value of 'name' in class EcuConfig is null, it must not be null");
+		}
 		this.config = config;
 	}
 
