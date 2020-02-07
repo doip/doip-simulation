@@ -123,6 +123,12 @@ public class StandardEcu extends Ecu implements Runnable {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public boolean processUdsMessageByLookupTable(UdsMessage request)");
 		}
+		
+		if (this.getConfig().getUdsLookupTable() == null) {
+			logger.info("No UDS lookup table defined");
+			return false;
+		}
+		
 		boolean ret = false;
 		byte[] requestMessage = request.getMessage();
 		byte[] requestMessageShort = null;
