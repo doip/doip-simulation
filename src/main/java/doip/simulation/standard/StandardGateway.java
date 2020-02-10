@@ -249,8 +249,7 @@ public class StandardGateway
 			DoipTcpDiagnosticMessageNegAck doipMessage) {
 		logger.trace(
 				">>> public void onDoipTcpDiagnosticMessageNegAck(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessageNegAck doipMessage)");
-		// TODO
-		logger.error("onDoipTcpDiagnosticMessageNegAck not implemented");
+		logger.info("Received DoIP diagnostic message negative acknowledgement, no further action required");
 		logger.trace(
 				"<<< public void onDoipTcpDiagnosticMessageNegAck(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessageNegAck doipMessage)");
 	}
@@ -260,8 +259,7 @@ public class StandardGateway
 			DoipTcpDiagnosticMessagePosAck doipMessage) {
 		logger.trace(
 				">>> public void onDoipTcpDiagnosticMessagePosAck(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessagePosAck doipMessage)");
-		// TODO
-		logger.error("onDoipTcpDiagnosticMessagePosAck not implemented");
+		logger.info("Received DoIP diagnostic message positive acknowledgement, no further action required");
 		logger.trace(
 				"<<< public void onDoipTcpDiagnosticMessagePosAck(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessagePosAck doipMessage)");
 	}
