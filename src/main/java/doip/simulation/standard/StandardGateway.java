@@ -723,7 +723,7 @@ public class StandardGateway
 			logger.trace(">>> public DoipUdpMessageHandler createDoipUdpMessageHandler(String name)");
 		}
 
-		DoipUdpMessageHandler handler = new DoipUdpMessageHandler(name, config.getUdpLookupTable());
+		DoipUdpMessageHandler handler = new DoipUdpMessageHandler(name, null);
 
 		if (logger.isTraceEnabled()) {
 			logger.trace("<<< public DoipUdpMessageHandler createDoipUdpMessageHandler(String name)");
