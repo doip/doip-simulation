@@ -21,8 +21,6 @@ public class GatewayConfig {
 
 	private Logger logger = LogManager.getLogger(this.getClass());
 
-	private String filename = null;
-	private String path = null;
 	private String name = null;
 	private InetAddress localAddress = null;
 	private int localPort = 0;
@@ -35,29 +33,17 @@ public class GatewayConfig {
 	private byte[] vin = null;
 	private int logicalAddress = 0;
 
-	private LookupTable udpLookupTable = null;
-	private LookupTable tcpLookupTable = null;
-
 	private int maxByteArraySizeLogging = 0;
 	private int maxByteArraySizeLookup = 0;
 	
-	private String ecuFiles = null;
 	private LinkedList<EcuConfig> ecuConfigList = new LinkedList<EcuConfig>();
 
 	public LinkedList<EcuConfig> getEcuConfigList() {
 		return ecuConfigList;
 	}
 
-	public String getEcuFiles() {
-		return ecuFiles;
-	}
-
 	public byte[] getEid() {
 		return eid;
-	}
-
-	public String getFilename() {
-		return filename;
 	}
 
 	public byte[] getGid() {
@@ -92,23 +78,19 @@ public class GatewayConfig {
 		return udpFiles;
 	}
 
-	public LookupTable getUdpLookupTable() {
-		return udpLookupTable;
-	}
-
 	public byte[] getVin() {
 		return vin;
 	}
 
-	public void loadEcus() throws IOException, MissingProperty, EmptyPropertyValue {
+	public void loadEcus(String path, String ecuFiles) throws IOException, MissingProperty, EmptyPropertyValue {
 		logger.trace(">>> public void loadEcus() throws IOException, MissingProperty, EmptyPropertyValue");
-		if (this.ecuFiles == null) {
+		if (ecuFiles == null) {
 			logger.trace("<<< public void loadEcus() throws IOException, MissingProperty, EmptyPropertyValue");
 			return;
 		}
-		String[] files = this.ecuFiles.split(";");
+		String[] files = ecuFiles.split(";");
 		for (int i = 0; i < files.length; i++) {
-			String filenameWithPath = this.path + files[i];
+			String filenameWithPath = path + files[i];
 			EcuConfig ecuConfig = new EcuConfig();
 			ecuConfig.loadFromFile(filenameWithPath);
 			this.ecuConfigList.add(ecuConfig);
@@ -128,14 +110,12 @@ public class GatewayConfig {
 		logger.info("Load properties from file " + filename);
 		try {
 			PropertyFile file = new PropertyFile(filename);
-			this.filename = filename;
 			this.name = file.getMandatoryPropertyAsString("name");
 			this.localAddress = file.getOptionalPropertyAsInetAddress("local.address");
 			this.localPort = file.getMandatoryPropertyAsInt("local.port");
 			this.multicastAddress = file.getOptionalPropertyAsInetAddress("multicast.address");
 			this.udpFiles = file.getOptionalPropertyAsString("udp.files");
 			this.tcpFiles = file.getOptionalPropertyAsString("tcp.files");
-			this.ecuFiles = file.getOptionalPropertyAsString("ecu.files");
 			this.maxByteArraySizeLogging = file.getMandatoryPropertyAsInt("maxByteArraySize.logging");
 			this.maxByteArraySizeLookup = file.getMandatoryPropertyAsInt("maxByteArraySize.lookup");
 			this.eid = file.getMandatoryPropertyAsByteArray("eid");
@@ -143,10 +123,10 @@ public class GatewayConfig {
 			this.vin = file.getMandatoryPropertyAsByteArray("vin.hex");
 			this.logicalAddress = file.getMandatoryPropertyAsInt("logicalAddress");
 
-			this.path = Helper.getPathOfFile(this.filename);
+			String ecuFiles = file.getOptionalPropertyAsString("ecu.files");
+			String path = Helper.getPathOfFile(filename);
 
-			this.loadLookupTables();
-			this.loadEcus();
+			this.loadEcus(path, ecuFiles);
 		} catch (IOException e) {
 			logger.trace("<<< public void loadFromFile(String filename) return with IOException");
 			throw e;
@@ -158,25 +138,6 @@ public class GatewayConfig {
 			throw e;
 		}
 		logger.trace("<<< public void loadFromFile(String filename)");
-	}
-
-	
-	public void loadLookupTables() throws IOException {
-		logger.trace(">>> public void loadLookupTables() throws IOException");
-		// Load UDP lookup table
-		this.udpLookupTable = createLookupTable();
-		if (this.udpFiles != null) {
-			String[] files = this.udpFiles.split(";");
-			this.udpLookupTable.addLookupEntriesFromFiles(path, files);
-		}
-
-		// Load TCP lookup table
-		this.tcpLookupTable = new LookupTable();
-		if (this.tcpFiles != null) {
-			String[] files = this.tcpFiles.split(";");
-			this.tcpLookupTable.addLookupEntriesFromFiles(path, files);
-		}
-		logger.trace("<<< public void loadLookupTables() throws IOException");
 	}
 	
 	/**
@@ -191,16 +152,8 @@ public class GatewayConfig {
 		this.ecuConfigList = ecuConfigList;
 	}
 
-	public void setEcuFiles(String ecuFiles) {
-		this.ecuFiles = ecuFiles;
-	}
-
 	public void setEid(byte[] eid) {
 		this.eid = eid;
-	}
-
-	public void setFilename(String filename) {
-		this.filename = filename;
 	}
 
 	public void setGid(byte[] gid) {
@@ -233,10 +186,6 @@ public class GatewayConfig {
 
 	public void setUdpFiles(String udpFiles) {
 		this.udpFiles = udpFiles;
-	}
-
-	public void setUdpLookupTable(LookupTable udpLookupTable) {
-		this.udpLookupTable = udpLookupTable;
 	}
 
 	public void setVin(byte[] vin) {
