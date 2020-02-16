@@ -138,8 +138,7 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 		logger.info(">>> public void testTesterPresent()");
 		
 		this.routingActivation();
-		this.sendRequestCheckResponse("3E 00", "7E 80");
-		this.sendRequestCheckResponse("3E 80", "");
+		this.sendRequestCheckResponse("3E 00", "7E 00");
 		
 		logger.info("<<< public void testTesterPresent()");
 		logger.info("#############################################################################");
@@ -203,41 +202,21 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 		Assert.assertNotNull("The UDS response was null", udsResponse);
 		String udsResponseString = Conversion.byteArrayToHexString(udsResponse);
 		
-		logger.info("UDS-RECV: " + hexStringTohexStringSpaced(udsResponseString));
+		logger.info("UDS-RECV: " + udsResponseString);
 		
 		posAck = new DoipTcpDiagnosticMessagePosAck(ecuAddress, testerAddress, 0x00, new byte[0]);
 		conn.send(posAck);
 		
 		String regex = responseRegex.replaceAll(" ", "").toUpperCase();
 	
-		result = udsResponseString.matches(regex);
+		result = udsResponseString.replaceAll(" ",  "").matches(regex);
 		if (result) {
-			logger.info("CHECK: The UDS response " + hexStringTohexStringSpaced(udsResponseString) + " matches the regular expression " + responseRegex);
+			logger.info("CHECK: The UDS response " + udsResponseString + " matches the regular expression " + responseRegex);
 		} else {
 			
-			logger.error("CHECK: The UDS response " + hexStringTohexStringSpaced(udsResponseString) + " does not match the regular expression " + responseRegex);
+			logger.error("CHECK: The UDS response " + udsResponseString + " does not match the regular expression " + responseRegex);
 		}
 	}
-	
-	/**
-	 * Converts a hex string to a hex string where bytes are separated by a
-	 * space character.
-	 * @param input
-	 * @return
-	 */
-	private String hexStringTohexStringSpaced(String input) {
-		StringBuffer output = new StringBuffer(input.length()*2);
-		char[] chars = input.toCharArray();
-		int len = chars.length;
-		for (int i = 0; i < len; i++) {
-			output.append(chars[i]);
-			if (i < len -1 && (i%2) != 0) {
-				output.append(' ');
-			}
-		}
-		return output.toString();
-	}
-	
 	
 	/**
 	 * Waits until message counter has reached a given value

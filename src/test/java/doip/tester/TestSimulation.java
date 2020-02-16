@@ -14,11 +14,9 @@ import org.junit.Test;
 
 import doip.junit.Assert;
 import doip.library.comm.DoipTcpConnection;
-import doip.library.message.DoipMessage;
 import doip.library.message.DoipTcpDiagnosticMessage;
 import doip.library.message.DoipTcpDiagnosticMessageNegAck;
 import doip.library.message.DoipTcpDiagnosticMessagePosAck;
-import doip.library.message.DoipTcpMessage;
 import doip.library.message.DoipTcpRoutingActivationRequest;
 import doip.library.message.DoipTcpRoutingActivationResponse;
 import doip.library.message.DoipUdpMessage;
