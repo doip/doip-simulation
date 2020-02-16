@@ -278,15 +278,23 @@ public class StandardEcu extends Ecu implements Runnable {
 						+ Conversion.byteArrayToHexStringShortDotted(response,
 								64));
 			}
+			
+			if (response.length <= 0) {
+				// Response with 0 bytes -> Don't send an answer
+				// Just clear current request and be read to receive
+				// new requests
+				this.clearCurrentRequest();
+			} else {
+				// Send response message
+				UdsMessage udsResponse = new UdsMessage(
+						/* source address */ this.getConfig().getPhysicalAddress(),
+						/* target address */ request.getSourceAdrress(),
+						/* response */ UdsMessage.PHYSICAL, response);
 
-			UdsMessage udsResponse = new UdsMessage(
-					/* source address */ this.getConfig().getPhysicalAddress(),
-					/* target address */ request.getSourceAdrress(),
-					/* response */ UdsMessage.PHYSICAL, response);
-
-			this.clearCurrentRequest();
-			this.onSendUdsMessage(udsResponse);
-
+				this.clearCurrentRequest();
+				this.onSendUdsMessage(udsResponse);
+			}
+			
 			ret = true;
 
 		} else {
