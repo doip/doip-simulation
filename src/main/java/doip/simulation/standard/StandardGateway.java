@@ -804,14 +804,20 @@ public class StandardGateway
 	 */
 	public void stop() {
 		if (logger.isTraceEnabled()) {
-			logger.trace(">>> void stop()");
+			logger.trace(">>> public void stop()");
 		}
 
-		logger.debug("Stop UDP interpreter");
-		this.doipUdpMessageHandler.stop();
+		
+		if (this.doipUdpMessageHandler != null) {
+			logger.debug("Stop UDP interpreter");
+			this.doipUdpMessageHandler.stop();
+		}
+		
 
-		logger.debug("Stop TCP server thread");
-		this.tcpServerThread.stop();
+		if (this.tcpServerThread != null) {
+			logger.debug("Stop TCP server thread");
+			this.tcpServerThread.stop();
+		}
 
 		logger.debug("Stop TCP connections");
 		this.stopConnections();
@@ -822,16 +828,20 @@ public class StandardGateway
 		logger.debug("Unprepare ECUs");
 		this.unprepareEcus();
 
-		logger.debug("Unprepare TCP server thread");
-		this.tcpServerThread.removeListener(this);
-		this.tcpServerThread = null;
+		if (this.tcpServerThread != null) {
+			logger.debug("Unprepare TCP server thread");
+			this.tcpServerThread.removeListener(this);
+			this.tcpServerThread = null;
+		}
 
-		logger.debug("Unprepare UDP receiver thread");
-		this.doipUdpMessageHandler.removeListener(this);
-		this.doipUdpMessageHandler = null;
+		if (this.doipUdpMessageHandler != null) {
+			logger.debug("Unprepare UDP receiver thread");
+			this.doipUdpMessageHandler.removeListener(this);
+			this.doipUdpMessageHandler = null;
+		}
 
 		if (logger.isTraceEnabled()) {
-			logger.trace("<<< void stop()");
+			logger.trace("<<< public void stop()");
 		}
 	}
 
