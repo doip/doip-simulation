@@ -1,4 +1,4 @@
-package doip.tester;
+package doip.simulation;
 
 import java.net.Socket;
 import java.util.LinkedList;
@@ -54,6 +54,11 @@ public class DoipTcpConnectionTest implements DoipTcpConnectionListener {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public void start(Socket socket)");
 		}
+		
+		if (socket == null) {
+			throw new IllegalArgumentException("The argument socket is null");
+		}
+		
 		doipTcpConnection = new DoipTcpConnection("TEST-TCP", 256);
 		doipTcpConnection.addListener(this);
 		doipTcpConnection.start(socket);

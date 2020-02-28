@@ -43,11 +43,14 @@ import doip.library.message.UdsMessage;
 import doip.library.net.TcpServer;
 import doip.library.net.TcpServerListener;
 import doip.library.net.TcpServerThread;
+import doip.library.timer.Timer;
+import doip.library.timer.TimerListener;
+import doip.library.timer.TimerThread;
 import doip.library.util.Conversion;
 import doip.library.util.Helper;
 
 public class StandardGateway
-		implements Gateway, TcpServerListener, DoipTcpConnectionListener, EcuListener, DoipUdpMessageHandlerListener {
+		implements Gateway, TcpServerListener, DoipTcpConnectionListener, EcuListener, DoipUdpMessageHandlerListener, TimerListener {
 
 	private static Logger logger = LogManager.getLogger(StandardGateway.class);
 
@@ -66,6 +69,8 @@ public class StandardGateway
 	private LinkedList<Ecu> standardEcuList = new LinkedList<Ecu>();
 
 	private int connectionInstanceCounter = 0;
+	
+	private Timer timerVam = null;
 
 	public StandardGateway(GatewayConfig config) {
 		if (config.getName() == null) {
@@ -94,8 +99,7 @@ public class StandardGateway
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> StandardConnection createStandardConnection()");
 		}
-
-		this.connectionInstanceCounter++;
+	this.connectionInstanceCounter++;
 		StandardTcpConnectionGateway standardConnection = new StandardTcpConnectionGateway(
 				config.getName() + ":TCP-RECV-" + this.connectionInstanceCounter, config.getMaxByteArraySizeLogging());
 
@@ -742,6 +746,7 @@ public class StandardGateway
 			logger.debug("Create UDP socket");
 			this.udpSocket = Helper.createUdpSocket(config.getLocalAddress(), config.getLocalPort(),
 					config.getMulticastAddress());
+			this.udpSocket.setBroadcast(true);
 			logger.debug("Create TCP server socket");
 			this.tcpSocket = Helper.createTcpServerSocket(config.getLocalAddress(), config.getLocalPort());
 
@@ -763,7 +768,13 @@ public class StandardGateway
 
 			logger.debug("Start TCP receiver thread");
 			this.tcpServerThread.start(this.tcpSocket);
-			// Thread.sleep(1);
+			
+			if (this.config.getBroadcastEnable() == true) {
+				this.timerVam = new TimerThread();
+				this.timerVam.addListener(this);
+				this.timerVam.start(500, 3);
+			}
+			
 
 		} catch (IOException e) {
 			logger.error(Helper.getExceptionAsString(e));
@@ -857,5 +868,21 @@ public class StandardGateway
 		}
 		this.standardEcuList.clear();
 		logger.trace("<<< public void unprepareEcus()");
+	}
+
+	@Override
+	public void onTimerExpired(Timer timer) {
+		// The only timer which will be used is the VAM timer.
+		// Send VAM
+		InetAddress broadcast = config.getBroadcastAddress();
+		DoipUdpVehicleAnnouncementMessage response = new DoipUdpVehicleAnnouncementMessage(config.getVin(),
+				config.getLogicalAddress(), config.getEid(), config.getGid(), 0, 0);
+		byte[] message = response.getMessage();
+		try {
+			this.sendDatagramPacket(message, message.length, broadcast, 13400);
+		} catch (IOException e) {
+			logger.error("IOException occured when trying to send vehicle announcement message to broadcast address");
+			logger.error(Helper.getExceptionAsString(e));
+		};
 	}
 }

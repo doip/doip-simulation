@@ -25,6 +25,8 @@ public class GatewayConfig {
 	private InetAddress localAddress = null;
 	private int localPort = 0;
 	private InetAddress multicastAddress = null;
+	private InetAddress broadcastAddress = null;
+	private boolean broadcastEnable = true;
 	private String udpFiles = null;
 	private String tcpFiles = null;
 
@@ -64,6 +66,14 @@ public class GatewayConfig {
 
 	public InetAddress getMulticastAddress() {
 		return multicastAddress;
+	}
+	
+	public InetAddress getBroadcastAddress() {
+		return broadcastAddress;
+	}
+	
+	public boolean getBroadcastEnable() {
+		return broadcastEnable;
 	}
 
 	public String getName() {
@@ -114,6 +124,8 @@ public class GatewayConfig {
 			this.localAddress = file.getOptionalPropertyAsInetAddress("local.address");
 			this.localPort = file.getMandatoryPropertyAsInt("local.port");
 			this.multicastAddress = file.getOptionalPropertyAsInetAddress("multicast.address");
+			this.broadcastAddress = file.getMandatoryPropertyAsInetAddress("broadcast.address");
+			this.broadcastEnable = file.getMandatoryPropertyAsBoolean("broadcast.enable");
 			this.udpFiles = file.getOptionalPropertyAsString("udp.files");
 			this.tcpFiles = file.getOptionalPropertyAsString("tcp.files");
 			this.maxByteArraySizeLogging = file.getMandatoryPropertyAsInt("maxByteArraySize.logging");
@@ -176,6 +188,14 @@ public class GatewayConfig {
 		this.multicastAddress = multicastAddress;
 	}
 
+	public void setBroadcastAddress(InetAddress broadcastAddress) {
+		this.broadcastAddress = broadcastAddress;
+	}
+	
+	public void setBroadcastEnable(boolean enable) {
+		this.broadcastEnable = enable;
+	}
+	
 	public void setName(String name) {
 		this.name = name;
 	}

@@ -1,4 +1,4 @@
-package doip.tester;
+package doip.simulation;
 
 import static doip.junit.Assert.*;
 
