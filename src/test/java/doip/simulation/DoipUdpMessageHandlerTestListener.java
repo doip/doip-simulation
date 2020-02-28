@@ -1,4 +1,4 @@
-package doip.tester;
+package doip.simulation;
 
 import doip.library.message.DoipUdpMessage;
 

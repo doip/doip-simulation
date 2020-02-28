@@ -1,4 +1,4 @@
-package doip.tester;
+package doip.simulation;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -13,6 +13,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import doip.junit.Assert;
+import static doip.junit.Assert.fail;
 import doip.library.comm.DoipTcpConnection;
 import doip.library.message.DoipTcpDiagnosticMessage;
 import doip.library.message.DoipTcpDiagnosticMessageNegAck;
@@ -58,62 +59,86 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		logger.info("-----------------------------------------------------------------------------");
-		logger.info(">>> public static void setUpBeforeClass()");
+		
+		try {
+			logger.info("-----------------------------------------------------------------------------");
+			logger.info(">>> public static void setUpBeforeClass()");
 
-		localhost = InetAddress.getLocalHost();
+			localhost = InetAddress.getLocalHost();
+			
+			gatewayConfig = new GatewayConfig();
+			gatewayConfig.loadFromFile("src/test/resources/gateway.properties");
+			
+			gateway = new StandardGateway(gatewayConfig);
+			gateway.start();
 		
-		gatewayConfig = new GatewayConfig();
-		gatewayConfig.loadFromFile("src/test/resources/gateway.properties");
+		} catch (Exception e) {
+			logger.error("Unexpected " +  e.getClass().getName() + " in setupBeforeClass()");
+			logger.error(Helper.getExceptionAsString(e));
+			throw e;
+		} finally {
+			logger.info("<<< public static void setUpBeforeClass()");
+			logger.info("-----------------------------------------------------------------------------");
+		}
 		
-		gateway = new StandardGateway(gatewayConfig);
-		gateway.start();
-		
-		logger.info("<<< public static void setUpBeforeClass()");
-		logger.info("-----------------------------------------------------------------------------");
 	}
 
 	@AfterClass
 	public static void tearDownAfterClass() throws Exception {
-		logger.info("-----------------------------------------------------------------------------");
-		logger.info(">>> public static void tearDownAfterClass()");
 		
-		if (gateway != null) {
-			gateway.stop();
+		try {
+			logger.info("-----------------------------------------------------------------------------");
+			logger.info(">>> public static void tearDownAfterClass()");
+			
+			if (gateway != null) {
+				gateway.stop();
 		}
 		gateway = null;
 		
-		logger.info("<<< public static void tearDownAfterClass()");
-		logger.info("-----------------------------------------------------------------------------");
+		} catch (Exception e) {
+			logger.error("Unexpected " +  e.getClass().getName() + " in tearDownAfterClass()");
+			logger.error(Helper.getExceptionAsString(e));
+			throw e;
+		} finally {
+			logger.info("<<< public static void tearDownAfterClass()");
+			logger.info("-----------------------------------------------------------------------------");
+		}
 	}
 
 	@Before
 	public void setUp() throws Exception {
-		logger.info("-----------------------------------------------------------------------------");
-		logger.info(">>> public void setUp()");
-		
-		sleep(100);
-		
-		this.testThread = Thread.currentThread();
-		
-		udpSocket = new DatagramSocket(13401);
-		doipUdpMessageHandlerTest = new DoipUdpMessageHandlerTest();
-		doipUdpMessageHandlerTest.addListener(this);
-		doipUdpMessageHandlerTest.start(udpSocket);
-		
-		tcpSocket = new Socket(localhost, 13400);
-		doipTcpConnectionTest = new DoipTcpConnectionTest();
-		doipTcpConnectionTest.addListener(this);
-		doipTcpConnectionTest.start(tcpSocket);
-		
-		sleep(100);
-		
-		logger.info("<<< public void setUp()");
-		logger.info("-----------------------------------------------------------------------------");
+		try {
+			logger.info("-----------------------------------------------------------------------------");
+			logger.info(">>> public void setUp()");
+			
+			sleep(100);
+			
+			this.testThread = Thread.currentThread();
+			
+			udpSocket = new DatagramSocket(13401);
+			doipUdpMessageHandlerTest = new DoipUdpMessageHandlerTest();
+			doipUdpMessageHandlerTest.addListener(this);
+			doipUdpMessageHandlerTest.start(udpSocket);
+			
+			tcpSocket = new Socket(localhost, 13400);
+			doipTcpConnectionTest = new DoipTcpConnectionTest();
+			doipTcpConnectionTest.addListener(this);
+			doipTcpConnectionTest.start(tcpSocket);
+			
+			sleep(100);
+		} catch (Exception e) {
+			logger.error("Unexpected "+ e.getClass().getName() + " in setUp()");
+			logger.error(Helper.getExceptionAsString(e));
+			throw e;
+		} finally {
+			logger.info("<<< public void setUp()");
+			logger.info("-----------------------------------------------------------------------------");
+		}
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		try {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public void tearDown()");
 		
@@ -132,9 +157,14 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		}
 		
 		sleep(100);
-		
-		logger.info("<<< public void tearDown()");
-		logger.info("-----------------------------------------------------------------------------");
+		} catch (Exception e) {
+			logger.error("Unexpected " + e.getClass().getName() + " in tearDown()");
+			logger.error(Helper.getExceptionAsString(e));
+			throw e;
+		} finally {
+			logger.info("<<< public void tearDown()");
+			logger.info("-----------------------------------------------------------------------------");
+		}
 	}
 	
 	/**
@@ -144,7 +174,7 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 	 * @throws IOException
 	 */
 	@Test
-	public void testUdpVehicleIdentRequest() throws IOException {
+	public void testUdpVehicleIdentRequest() {
 		logger.info("#############################################################################");
 		logger.info(">>> public void testVehicleIdentRequest()");
 		
@@ -219,7 +249,7 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 	 * @param doipUdpMessage The vehicle identification request message
 	 * @throws IOException Will be thrown if message could not be sent to gateway
 	 */
-	private void testUdpVehicleIdentRequest(DoipUdpMessage doipUdpMessage) throws IOException {
+	private void testUdpVehicleIdentRequest(DoipUdpMessage doipUdpMessage) {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> private void testUdpVehicleIdentRequest(DoipUdpMessage doipUdpMessage)");
 		}
@@ -372,11 +402,17 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 	 * @param doipUdpMessage The DoIP UDP message to send
 	 * @throws IOException Will be thrown if UDP message could not be send
 	 */
-	private void sendUdpMessage(DoipUdpMessage doipUdpMessage) throws IOException {
+	private void sendUdpMessage(DoipUdpMessage doipUdpMessage) {
 		byte[] message = doipUdpMessage.getMessage();
 		int length = message.length;
 		DatagramPacket packet = new DatagramPacket(message, length, localhost, 13400);
-		udpSocket.send(packet);
+		try {
+			udpSocket.send(packet);
+		} catch (IOException e) {
+			logger.error("Unexpected " + e.getClass().getName() + " in sendUdpMessage(DoipUdpMessage doipUdpMessage)");
+			logger.error(Helper.getExceptionAsString(e));
+			fail("DatagramSocket.send(DatagramPacket packet failed.");
+		}
 	}
 	
 	/**
