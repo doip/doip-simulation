@@ -18,7 +18,20 @@ The custom simulation which is a running application is hosted here:
 https://github.com/doip/doip-custom-simulation.git
 
 A documentation of the whole project is available at
-http://automotive-doip/downloads/DoIP-Software-Documentation.pdf
+http://automotive-doip.com/downloads/DoIP-Software-Documentation.pdf
+
+==============================================================================
+
+                     Release Notes for Version: 1.4.0
+
+NEW FEATURES
+============
+
+- Issue #27:   Functional addressing is now supported
+
+FIXED BUGS:
+
+- Issue #25:   NullPointerException in StandardGateway.stop()
 
 ==============================================================================
 
