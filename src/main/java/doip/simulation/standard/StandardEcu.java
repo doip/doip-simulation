@@ -57,7 +57,7 @@ public class StandardEcu extends Ecu implements Runnable {
 		super(config);
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public StandardEcu(EcuConfig config)");
-			logger.debug("Create Srandard ECU with name " + config.getName());
+			logger.debug("Create Standard ECU with name " + config.getName());
 			logger.trace("<<< public StandardEcu(EcuConfig config)");
 		}
 	}

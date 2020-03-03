@@ -204,24 +204,19 @@ public class StandardGateway
 			logger.debug("Search for ECU which corresponding target address");
 		}
 
-		// Iterate over all ECUs and find the ECU by the given
-		// target address.
-		Ecu targetEcu = null;
-		Iterator<Ecu> iter = this.standardEcuList.iterator();
-		while (iter.hasNext()) {
-			Ecu tmpEcu = iter.next();
-			if (tmpEcu.getConfig().getPhysicalAddress() == target) {
-				if (logger.isInfoEnabled()) {
-					logger.info("Found ECU to handle diagnostic message");
-				}
-				targetEcu = tmpEcu;
-				break;
+		// Iterate over all ECUs and find ECUs which have a 
+		// physical or functional address like target address.
+		LinkedList<Ecu> targetEcus = new LinkedList<Ecu>();
+		for (Ecu tmpEcu : this.standardEcuList) {
+			if ((tmpEcu.getConfig().getPhysicalAddress() == target) ||
+				 (tmpEcu.getConfig().getFunctionalAddress() == target)) {
+				targetEcus.add(tmpEcu);
 			}
 		}
 
 		// [DoIP-071] If target address is unknown then send negative acknowledgement
 		// with code 0x03.
-		if (targetEcu == null) {
+		if (targetEcus.size() == 0) {
 			logger.warn("Could not find a ECU with target address " + target);
 			DoipTcpDiagnosticMessageNegAck negAck = new DoipTcpDiagnosticMessageNegAck(target,
 					source, DoipTcpDiagnosticMessageNegAck.NACK_CODE_UNKNOWN_TARGET_ADDRESS, new byte[] {});
@@ -239,8 +234,17 @@ public class StandardGateway
 		DoipTcpDiagnosticMessagePosAck posAck = new DoipTcpDiagnosticMessagePosAck(target,
 				source, 0x00, new byte[] {});
 		doipTcpConnection.send(posAck);
-		UdsMessage request = new UdsMessage(source, target, UdsMessage.PHYSICAL, diagnosticMessage);
-		targetEcu.putRequest(request);
+		
+		// Send UDS message to Ecu
+		for (Ecu tmpEcu : targetEcus) {
+			if (tmpEcu.getConfig().getPhysicalAddress() == target) {
+				UdsMessage request = new UdsMessage(source, target, UdsMessage.PHYSICAL, diagnosticMessage);
+				tmpEcu.putRequest(request);
+			} else if (tmpEcu.getConfig().getFunctionalAddress() == target) {
+				UdsMessage request = new UdsMessage(source, target, UdsMessage.FUNCTIONAL, diagnosticMessage);
+				tmpEcu.putRequest(request);
+			}
+		}
 
 		if (logger.isTraceEnabled()) {
 			logger.trace(
