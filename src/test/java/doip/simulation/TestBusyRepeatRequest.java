@@ -1,7 +1,5 @@
 package doip.simulation;
 
-import static doip.junit.Assert.*;
-
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
