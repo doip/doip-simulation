@@ -30,6 +30,7 @@ NEW FEATURES
 - Issue #27:   Functional addressing is now supported
 
 FIXED BUGS:
+===========
 
 - Issue #25:   NullPointerException in StandardGateway.stop()
 
@@ -49,4 +50,3 @@ NEW FEATURES
                - broadcast.enable: Can be set to true or false, it will control 
                    if initial VAM will be send out.
                    
-    
