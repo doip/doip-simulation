@@ -272,12 +272,16 @@ public class StandardGateway
 				"<<< public void onDoipTcpDiagnosticMessagePosAck(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessagePosAck doipMessage)");
 	}
 
+	/**
+	 * [DoIP-039] Ignore DoIP header negative acknowledge message.
+	 */
 	@Override
 	public void onDoipTcpHeaderNegAck(DoipTcpConnection doipTcpConnection, DoipTcpHeaderNegAck doipMessage) {
 		logger.trace(">>> public void onDoipHeaderNegAck("
 				+ "DoipTcpConnection doipTcpConnection, DoipHeaderNegAck doipMessage)");
-		// TODO
-		logger.warn("No implementation");
+		
+		logger.warn("Received generic DoIP header negative acknowledge, no further action required.");
+		
 		logger.trace("<<< public void onDoipHeaderNegAck("
 				+ "DoipTcpConnection doipTcpConnection, DoipHeaderNegAck doipMessage)");
 	}
