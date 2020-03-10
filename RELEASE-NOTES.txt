@@ -22,6 +22,31 @@ http://automotive-doip.com/downloads/DoIP-Software-Documentation.pdf
 
 ==============================================================================
 
+                     Release Notes for Version: 1.4.2
+
+FIXED BUGS
+==========
+
+- Issue #37    Support setting maxByteArraySize.lookup and .logging in
+               Standard ECU.
+
+==============================================================================
+
+                     Release Notes for Version: 1.4.1
+
+NEW FEATURES
+============
+
+- Issue #32:   Changed log message for reception of
+               DoIP header negative acknowledge
+
+FIXED BUGS
+==========
+
+- Issue #33:   Version number in build.gradle is now correct
+
+==============================================================================
+
                      Release Notes for Version: 1.4.0
 
 NEW FEATURES
