@@ -259,10 +259,10 @@ public class StandardEcu extends Ecu implements Runnable {
 		byte[] requestMessage = request.getMessage();
 		byte[] requestMessageShort = null;
 
-		// TODO: Use parameter maxByteArraySizeLookup instead of fixed value of
-		// 16
-		if (requestMessage.length > 16) {
-			requestMessageShort = Arrays.copyOf(requestMessage, 16);
+		int maxByteArraySizeLookup = this.getConfig().getMaxByteArraySizeLookup();
+		
+		if (requestMessage.length > maxByteArraySizeLookup) {
+			requestMessageShort = Arrays.copyOf(requestMessage, maxByteArraySizeLookup);
 		} else {
 			requestMessageShort = requestMessage;
 		}
@@ -272,11 +272,10 @@ public class StandardEcu extends Ecu implements Runnable {
 
 		if (response != null) {
 			if (logger.isInfoEnabled()) {
-				// TODO: Use parameter maxByteArraySizeLogging instead of fixed
-				// value of 64
+				int maxByteArraySizeLogging = this.getConfig().getMaxByteArraySizeLogging();
 				logger.info("Found matching request pattern, response = "
 						+ Conversion.byteArrayToHexStringShortDotted(response,
-								64));
+								maxByteArraySizeLogging));
 			}
 			
 			if (response.length <= 0) {

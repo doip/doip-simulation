@@ -21,6 +21,10 @@ public class EcuConfig {
 	private int physicalAddress = 0;
 	private int functionalAddress = 0;
 	private LookupTable udsLookupTable = null;
+	
+	private int maxByteArraySizeLookup = 0;
+	
+	private int maxByteArraySizeLogging = 0;
 
 	public int getFunctionalAddress() {
 		return functionalAddress;
@@ -93,5 +97,21 @@ public class EcuConfig {
 
 	public void setUdsLookupTable(LookupTable udsLookupTable) {
 		this.udsLookupTable = udsLookupTable;
+	}
+
+	public int getMaxByteArraySizeLookup() {
+		return maxByteArraySizeLookup;
+	}
+
+	public void setMaxByteArraySizeLookup(int maxByteArraySizeLookup) {
+		this.maxByteArraySizeLookup = maxByteArraySizeLookup;
+	}
+
+	public int getMaxByteArraySizeLogging() {
+		return maxByteArraySizeLogging;
+	}
+
+	public void setMaxByteArraySizeLogging(int maxByteArraySizeLogging) {
+		this.maxByteArraySizeLogging = maxByteArraySizeLogging;
 	}
 }

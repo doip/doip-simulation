@@ -102,6 +102,12 @@ public class GatewayConfig {
 		for (int i = 0; i < files.length; i++) {
 			String filenameWithPath = path + files[i];
 			EcuConfig ecuConfig = new EcuConfig();
+			
+			// Set default values for maxByteArraySizeLookup / maxByteArraySizeLogging
+			ecuConfig.setMaxByteArraySizeLookup(this.maxByteArraySizeLookup);
+			ecuConfig.setMaxByteArraySizeLogging(this.maxByteArraySizeLogging);
+			
+			
 			ecuConfig.loadFromFile(filenameWithPath);
 			this.ecuConfigList.add(ecuConfig);
 		}
