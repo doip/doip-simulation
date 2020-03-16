@@ -112,7 +112,7 @@ public class StandardEcu extends Ecu implements Runnable {
 	 * 
 	 * @return
 	 */
-	private synchronized UdsMessage getCurrentRequest() {
+	public synchronized UdsMessage getCurrentRequest() {
 		return currentRequest;
 	}
 
@@ -121,7 +121,7 @@ public class StandardEcu extends Ecu implements Runnable {
 	 * 
 	 * @param currentRequest
 	 */
-	private synchronized void setCurrentRequest(UdsMessage currentRequest) {
+	public synchronized void setCurrentRequest(UdsMessage currentRequest) {
 		this.currentRequest = currentRequest;
 	}
 
@@ -130,7 +130,7 @@ public class StandardEcu extends Ecu implements Runnable {
 	 * to null) and clears the "isBusy" flag. After calling this function the
 	 * ECU is ready to receive new requests.
 	 */
-	private synchronized void clearCurrentRequest() {
+	public synchronized void clearCurrentRequest() {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> private synchronized void clearCurrentRequest()");
 		}

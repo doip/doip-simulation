@@ -27,7 +27,10 @@ http://automotive-doip.com/downloads/DoIP-Software-Documentation.pdf
 FIXED BUGS
 ==========
 
-- Issue #37    Support setting maxByteArraySize.lookup and .logging in
+- Issue #39:   Made method StandardEcu.clearCurrentRequest() public.
+               (also setter & getter made public)
+
+- Issue #37:   Support setting maxByteArraySize.lookup and .logging in
                Standard ECU.
 
 ==============================================================================
