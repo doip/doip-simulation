@@ -49,25 +49,57 @@ import doip.library.timer.TimerThread;
 import doip.library.util.Conversion;
 import doip.library.util.Helper;
 
+/**
+ * Implements a DoIP gateway according to ISO 13400-2. Typically a real 
+ * gateway also provides diagnostic functions like a normal ECU. If so,
+ * then the diagnostic functions for this gateway needs to be implemented
+ * similar to a normal ECU which is behind the gateway.
+ */
 public class StandardGateway
 		implements Gateway, TcpServerListener, DoipTcpConnectionListener, EcuListener, DoipUdpMessageHandlerListener, TimerListener {
 
 	private static Logger logger = LogManager.getLogger(StandardGateway.class);
 
+	/**
+	 * Contains the configuration for this gateway
+	 */
 	private GatewayConfig config = null;
 
+	/**
+	 * UDP socket for this gateway
+	 */
 	private MulticastSocket udpSocket = null;
 
-	private ServerSocket tcpSocket = null;
+	/**
+	 * TCP server socket on which the gateway will listen for new
+	 * TCP connections
+	 */
+	private ServerSocket tcpServerSocket = null;
 
 	private DoipUdpMessageHandler doipUdpMessageHandler = null;
 
+	/**
+	 * The server thread which is waiting for incoming TCP connections
+	 */
 	private TcpServerThread tcpServerThread = null;
 
+	/**
+	 * List of TCP connections which have been established to the gateway
+	 */
 	private LinkedList<StandardTcpConnectionGateway> standardConnectionList = new LinkedList<StandardTcpConnectionGateway>();
 
-	private LinkedList<Ecu> standardEcuList = new LinkedList<Ecu>();
+	/**
+	 * List of ECUs which are behind this gateway. To this ECUs the UDS messages 
+	 * will be send and the ECUs will send back their responses.
+	 */
+	private LinkedList<Ecu> ecuList = new LinkedList<Ecu>();
 
+	/**
+	 * Every TCP connection (which will be running in a thread) 
+	 * gets an own number which will be used for logging the thread name.
+	 * This will be helpful in the log output where you can see the thread name.
+	 * 
+	 */
 	private int connectionInstanceCounter = 0;
 	
 	private Timer timerVam = null;
@@ -99,7 +131,7 @@ public class StandardGateway
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> StandardConnection createStandardConnection()");
 		}
-	this.connectionInstanceCounter++;
+		this.connectionInstanceCounter++;
 		StandardTcpConnectionGateway standardConnection = new StandardTcpConnectionGateway(
 				config.getName() + ":TCP-RECV-" + this.connectionInstanceCounter, config.getMaxByteArraySizeLogging());
 
@@ -207,7 +239,7 @@ public class StandardGateway
 		// Iterate over all ECUs and find ECUs which have a 
 		// physical or functional address like target address.
 		LinkedList<Ecu> targetEcus = new LinkedList<Ecu>();
-		for (Ecu tmpEcu : this.standardEcuList) {
+		for (Ecu tmpEcu : this.ecuList) {
 			if ((tmpEcu.getConfig().getPhysicalAddress() == target) ||
 				 (tmpEcu.getConfig().getFunctionalAddress() == target)) {
 				targetEcus.add(tmpEcu);
@@ -235,7 +267,7 @@ public class StandardGateway
 				source, 0x00, new byte[] {});
 		doipTcpConnection.send(posAck);
 		
-		// Send UDS message to Ecu
+		// Send UDS message to ECU
 		for (Ecu tmpEcu : targetEcus) {
 			if (tmpEcu.getConfig().getPhysicalAddress() == target) {
 				UdsMessage request = new UdsMessage(source, target, UdsMessage.PHYSICAL, diagnosticMessage);
@@ -631,7 +663,7 @@ public class StandardGateway
 			EcuConfig ecuConfig = iter.next();
 			Ecu ecu = this.createEcu(ecuConfig);
 			ecu.addListener(this);
-			this.standardEcuList.add(ecu);
+			this.ecuList.add(ecu);
 		}
 		logger.trace("<<< public void prepareEcus()");
 	}
@@ -756,7 +788,7 @@ public class StandardGateway
 					config.getMulticastAddress());
 			this.udpSocket.setBroadcast(true);
 			logger.debug("Create TCP server socket");
-			this.tcpSocket = Helper.createTcpServerSocket(config.getLocalAddress(), config.getLocalPort());
+			this.tcpServerSocket = Helper.createTcpServerSocket(config.getLocalAddress(), config.getLocalPort());
 
 			logger.debug("Pepare UDP message handler");
 			this.doipUdpMessageHandler = createDoipUdpMessageHandler(config.getName() + ":UDP-RECV");
@@ -775,7 +807,7 @@ public class StandardGateway
 			this.doipUdpMessageHandler.start(this.udpSocket);
 
 			logger.debug("Start TCP receiver thread");
-			this.tcpServerThread.start(this.tcpSocket);
+			this.tcpServerThread.start(this.tcpServerSocket);
 			
 			if (this.config.getBroadcastEnable() == true) {
 				this.timerVam = new TimerThread();
@@ -797,7 +829,7 @@ public class StandardGateway
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public void startEcus()");
 		}
-		Iterator<Ecu> iter = this.standardEcuList.iterator();
+		Iterator<Ecu> iter = this.ecuList.iterator();
 		while (iter.hasNext()) {
 			Ecu ecu = iter.next();
 			ecu.start();
@@ -869,7 +901,7 @@ public class StandardGateway
 
 	public void stopEcus() {
 		logger.trace(">>> public void stopEcus()");
-		Iterator<Ecu> iter = this.standardEcuList.iterator();
+		Iterator<Ecu> iter = this.ecuList.iterator();
 		while (iter.hasNext()) {
 			Ecu ecu = iter.next();
 			ecu.stop();
@@ -879,12 +911,12 @@ public class StandardGateway
 
 	public void unprepareEcus() {
 		logger.trace(">>> public void unprepareEcus()");
-		Iterator<Ecu> iter = this.standardEcuList.iterator();
+		Iterator<Ecu> iter = this.ecuList.iterator();
 		while (iter.hasNext()) {
 			Ecu ecu = iter.next();
 			ecu.removeListener(this);
 		}
-		this.standardEcuList.clear();
+		this.ecuList.clear();
 		logger.trace("<<< public void unprepareEcus()");
 	}
 
@@ -902,5 +934,26 @@ public class StandardGateway
 			logger.error("IOException occured when trying to send vehicle announcement message to broadcast address");
 			logger.error(Helper.getExceptionAsString(e));
 		};
+	}
+
+	
+//-----------------------------------------------------------------------------
+// Getter & setter
+//-----------------------------------------------------------------------------
+	
+	/**
+	 * Getter for member 'ecuList'
+	 * @return
+	 */
+	public LinkedList<Ecu> getEcuList() {
+		return ecuList;
+	}
+
+	/**
+	 * Getter for member 'standardConnectionList' 
+	 * @return
+	 */
+	public LinkedList<StandardTcpConnectionGateway> getStandardConnectionList() {
+		return standardConnectionList;
 	}
 }
