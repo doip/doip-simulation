@@ -956,4 +956,13 @@ public class StandardGateway
 	public LinkedList<StandardTcpConnectionGateway> getStandardConnectionList() {
 		return standardConnectionList;
 	}
+	
+
+	/**
+	 * Getter for member 'config'
+	 * @return
+	 */
+	public GatewayConfig getConfig() {
+		return this.config;
+	}
 }
