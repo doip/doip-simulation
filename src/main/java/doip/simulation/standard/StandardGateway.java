@@ -903,4 +903,8 @@ public class StandardGateway
 			logger.error(Helper.getExceptionAsString(e));
 		};
 	}
+
+	public LinkedList<Ecu> getStandardEcuList() {
+		return standardEcuList;
+	}
 }
