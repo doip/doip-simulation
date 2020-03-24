@@ -23,7 +23,7 @@ http://automotive-doip.com/downloads/DoIP-Software-Documentation.pdf
 ==============================================================================
 
                      Release Notes for Version: 1.4.3
-                     
+
 FIXED BUGS
 ==========
 
@@ -41,7 +41,7 @@ NEW FEATURES
                      Release Notes for Version: 1.4.2
 
 FIXED BUGS
-==========
+==========:
 
 - Issue #39:   Made method StandardEcu.clearCurrentRequest() public.
                (also setter & getter made public)
