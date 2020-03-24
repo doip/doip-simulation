@@ -165,6 +165,7 @@ public class StandardGateway
 	@Override
 	public void onConnectionClosed(DoipTcpConnection doipTcpConnection) {
 		logger.trace(">>> public void onConnectionClosed(DoipTcpConnection doipTcpConnection)");
+		doipTcpConnection.removeListener(this);
 		this.standardConnectionList.remove(doipTcpConnection);
 		logger.trace("<<< public void onConnectionClosed(DoipTcpConnection doipTcpConnection)");
 	}
