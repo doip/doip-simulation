@@ -165,6 +165,7 @@ public class StandardGateway
 	@Override
 	public void onConnectionClosed(DoipTcpConnection doipTcpConnection) {
 		logger.trace(">>> public void onConnectionClosed(DoipTcpConnection doipTcpConnection)");
+		doipTcpConnection.removeListener(this);
 		this.standardConnectionList.remove(doipTcpConnection);
 		logger.trace("<<< public void onConnectionClosed(DoipTcpConnection doipTcpConnection)");
 	}
@@ -220,7 +221,7 @@ public class StandardGateway
 		// [DoIP-070] If source address is not activated on the current socket
 		// send a negative acknowledgement with code 0x02 and close the socket
 		if (source != standardConnection.getRegisteredSourceAddress()) {
-			logger.warn("Received a diagnostic message which is not registered at this socket.");
+			logger.warn("Received a diagnostic message with a source address which is not registered at this socket.");
 			DoipTcpDiagnosticMessageNegAck negAck = new DoipTcpDiagnosticMessageNegAck(target,
 					source, DoipTcpDiagnosticMessageNegAck.NACK_CODE_INVALID_SOURCE_ADDRESS, new byte[] {});
 			doipTcpConnection.send(negAck);
