@@ -907,4 +907,8 @@ public class StandardGateway
 	public LinkedList<Ecu> getStandardEcuList() {
 		return standardEcuList;
 	}
+
+	public LinkedList<StandardTcpConnectionGateway> getStandardConnectionList() {
+		return standardConnectionList;
+	}
 }
