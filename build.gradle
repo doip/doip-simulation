@@ -13,8 +13,11 @@ repositories {
 }
 
 dependencies {
-//	implementation 'com.github.doip:doip-library:1.2.0'
-	implementation files('../doip-library/build/libs/doip-library-1.2.0.jar')
+	implementation 'com.github.doip:doip-library:1.2.0'
+	// During development it might be more convenient to link to doip-library
+	// in the local file system
+	// implementation files('../doip-library/build/libs/doip-library-1.2.0.jar')
+
 	implementation 'com.github.doip:doip-logging:1.2.0'
 
 	testImplementation 'com.github.doip:doip-junit:1.1.1'
