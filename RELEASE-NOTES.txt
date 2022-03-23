@@ -20,10 +20,22 @@ https://github.com/doip/doip-custom-simulation.git
 A documentation of the whole project is available at
 http://automotive-doip.com/downloads/DoIP-Software-Documentation.pdf
 
+
+
+==============================================================================
+
+                     Release Notes for Version: 1.5.0
+
+CHANGES
+=======
+
+- Issue #51:   Update to JUnit5, Gradle 7.3, newest versions of depending
+               doip libraries
+
 ==============================================================================
 
                      Release Notes for Version: 1.4.3
-                     
+
 FIXED BUGS
 ==========
 
@@ -31,10 +43,10 @@ FIXED BUGS
 
 NEW FEATURES
 ============
-                     
+
 - Issue #44:   Implemented getter for StandardGateway.config
 
-- Issue #42:   Implemented getter for StandardGateway.ecuList                   
+- Issue #42:   Implemented getter for StandardGateway.ecuList
 
 ==============================================================================
 
@@ -85,12 +97,11 @@ NEW FEATURES
 ============
 
 - Issue #22:   Vehicle announcement message at start up:
-               Simulation will now send VAM at startup. Therefore two new 
+               Simulation will now send VAM at startup. Therefore two new
                properties had been introduced into the property file.
-               
+
                - broadcast.address: Address to which the broadcast VAM will
                    send to.
                - broadcast.enable: Can be set to true or false, it will control 
                    if initial VAM will be send out.
-                   
-    
+
