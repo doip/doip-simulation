@@ -4,13 +4,13 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import doip.junit.Assert;
+import static doip.junit.Assertions.*;
 import doip.library.comm.DoipTcpConnection;
 import doip.library.message.DoipTcpDiagnosticMessage;
 import doip.library.message.DoipTcpRoutingActivationRequest;
@@ -51,7 +51,7 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 	 */
 	int messageCounter = 0;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public static void setUpBeforeClass()");
@@ -78,7 +78,7 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 		logger.info("-----------------------------------------------------------------------------");
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public static void tearDownAfterClass()");
@@ -96,7 +96,7 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 		logger.info("-----------------------------------------------------------------------------");
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public void setUp()");
@@ -114,7 +114,7 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 		logger.info("-----------------------------------------------------------------------------");
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public void tearDown()");
@@ -164,11 +164,11 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 		conn.send(request);
 		this.messageCounter = 0;
 		boolean ret = this.waitForMessageReceived(1000, 1);
-		Assert.assertTrue("Did not receive any response on routing activation request", ret);
+		assertTrue(ret, "Did not receive any response on routing activation request");
 		DoipTcpRoutingActivationResponse response = connTest.getLastDoipTcpRoutingActivationResponse();
-		Assert.assertNotNull("Did not receive a routing activation response", response);
+		assertNotNull(response, "Did not receive a routing activation response");
 		int responseCode = response.getResponseCode();
-		Assert.assertEquals("The response code in routing activation response",  0x10, responseCode);
+		assertEquals(0x10, responseCode, "The response code in routing activation response");
 		return true;
 	}
 	

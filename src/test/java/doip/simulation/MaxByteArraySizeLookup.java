@@ -1,11 +1,11 @@
 package doip.simulation;
 
-import static doip.junit.Assert.assertFalse;
-import static doip.junit.Assert.assertTrue;
+import static doip.junit.Assertions.assertFalse;
+import static doip.junit.Assertions.assertTrue;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import doip.library.message.UdsMessage;
 import doip.library.util.LookupEntry;
@@ -20,11 +20,11 @@ public class MaxByteArraySizeLookup {
 	private EcuConfig config = null;
 
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -44,11 +44,11 @@ public class MaxByteArraySizeLookup {
 	
 		UdsMessage msg = new UdsMessage(0x0E00, 0x100, new byte[] {0x10, 0x03});
 		boolean ret = ecu.processRequestByLookupTable(msg);
-		assertTrue("The UDS message did not match the regular expression", ret);
+		assertTrue(ret, "The UDS message did not match the regular expression");
 		
 		config.setMaxByteArraySizeLookup(2);
 		msg = new UdsMessage(0x0E00, 0x100, new byte[] {0x10, 0x03});
 		ret = ecu.processRequestByLookupTable(msg);
-		assertFalse("The UDS message did match the regular expression", ret);
+		assertFalse(ret, "The UDS message did match the regular expression");
 	}
 }

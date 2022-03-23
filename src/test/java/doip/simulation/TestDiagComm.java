@@ -1,20 +1,19 @@
 package doip.simulation;
 
-import static doip.junit.Assert.fail;
+import static doip.junit.Assertions.fail;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import doip.junit.Assert;
+import static doip.junit.Assertions.*;
 import doip.library.comm.DoipTcpConnection;
 import doip.library.message.DoipTcpDiagnosticMessage;
 import doip.library.message.DoipTcpDiagnosticMessagePosAck;
@@ -50,7 +49,7 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 	
 	private static final int ecuAddress = 4711;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public static void setUpBeforeClass()");
@@ -91,7 +90,7 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 		logger.info("-----------------------------------------------------------------------------");
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public static void tearDownAfterClass()");
@@ -109,7 +108,7 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 		logger.info("-----------------------------------------------------------------------------");
 	}
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public void setUp()");
@@ -120,7 +119,7 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 		connTest.addListener(this);
 		
 		tcpSocket = new Socket(localhost, 13400);
-		Assert.assertNotNull("Could not create a TCP connection to localhost port 13400", tcpSocket);
+		assertNotNull(tcpSocket, "Could not create a TCP connection to localhost port 13400");
 		connTest.start(tcpSocket);
 		
 		sleep(10);
@@ -129,7 +128,7 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 		logger.info("-----------------------------------------------------------------------------");
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.info("-----------------------------------------------------------------------------");
 		logger.info(">>> public void tearDown()");
@@ -148,7 +147,6 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 	 * Will crash when simulation is not running
 	 */
 	@Test
-	@Ignore
 	public void testSession() {
 		logger.info("#############################################################################");
 		logger.info(">>> public void testSession()");
@@ -164,7 +162,6 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 	}
 	
 	@Test
-	@Ignore
 	public void testTesterPresent() {
 		logger.info("#############################################################################");
 		logger.info(">>> public void testTesterPresent()");
@@ -190,7 +187,7 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 		conn.send(doipRequest);
 		
 		boolean result = this.waitForMessageCounter(1, 100);
-		Assert.assertTrue(result);
+		assertTrue(result);
 	}
 	
 	/**
@@ -210,28 +207,28 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 		conn.send(doipUdsRequest);
 		
 		boolean result = this.waitForMessageCounter(1, 100);
-		doip.junit.Assert.assertEquals(true, result);
-		Assert.assertTrue(result);
+		assertEquals(true, result);
+		assertTrue(result);
 		DoipTcpDiagnosticMessagePosAck posAck = connTest.getLastDoipTcpDiagnosticMessagePosAck();
-		Assert.assertNotNull("Didn't receive a positive acknowledgement message on diagnostic request", posAck);
-		Assert.assertEquals("The acknowledgement code is unequal to 0x10", 0x00, posAck.getAckCode());
+		assertNotNull(posAck, "Didn't receive a positive acknowledgement message on diagnostic request");
+		assertEquals(0x00, posAck.getAckCode(), "The acknowledgement code is unequal to 0x10");
 		
 		
 		result = this.waitForMessageCounter(2, 100);
-		Assert.assertTrue("Didn't receive any message from ECU, expected was to receive a UDS response", result);
+		assertTrue(result, "Didn't receive any message from ECU, expected was to receive a UDS response");
 		DoipTcpDiagnosticMessage doipUdsResponse = connTest.getLastDoipTcpDiagnosticMessage();
-		Assert.assertNotNull("Didn't receive a UDS response from ECU", doipUdsResponse);
+		assertNotNull(doipUdsResponse, "Didn't receive a UDS response from ECU");
 		
-		Assert.assertEquals("The target address of the UDS response is wrong, "
-				+ "it does not match to the tester address", 
-				testerAddress, doipUdsResponse.getTargetAddress());
+		assertEquals(testerAddress, doipUdsResponse.getTargetAddress(), 
+				"The target address of the UDS response is wrong, "
+				+ "it does not match to the tester address");
 		
-		Assert.assertEquals("The source address of the UDS response is wrong, "
-				+ "it does not match to the ECU address",
-				ecuAddress, doipUdsResponse.getSourceAddress());
+		assertEquals( ecuAddress, doipUdsResponse.getSourceAddress(), 
+				"The source address of the UDS response is wrong, "
+				+ "it does not match to the ECU address");
 		
 		byte[] udsResponse = doipUdsResponse.getDiagnosticMessage();
-		Assert.assertNotNull("The UDS response was null", udsResponse);
+		assertNotNull(udsResponse, "The UDS response was null");
 		String udsResponseString = Conversion.byteArrayToHexString(udsResponse);
 		
 		logger.info("UDS-RECV: " + udsResponseString);

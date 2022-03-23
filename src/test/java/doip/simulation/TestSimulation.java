@@ -6,14 +6,13 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import doip.junit.Assert;
-import static doip.junit.Assert.fail;
+import static doip.junit.Assertions.*;
 import doip.library.comm.DoipTcpConnection;
 import doip.library.message.DoipTcpDiagnosticMessage;
 import doip.library.message.DoipTcpDiagnosticMessageNegAck;
@@ -57,7 +56,7 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 	 */
 	private Thread testThread = null;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setUpBeforeClass() throws Exception {
 		
 		try {
@@ -83,7 +82,7 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void tearDownAfterClass() throws Exception {
 		
 		try {
@@ -105,7 +104,7 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		}
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		try {
 			logger.info("-----------------------------------------------------------------------------");
@@ -136,7 +135,7 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		try {
 		logger.info("-----------------------------------------------------------------------------");
@@ -234,9 +233,9 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		sendUdpMessage(doipMessage);
 		sleep(550);
 		
-		Assert.assertEquals(0, doipUdpMessageHandlerTest.getOnDoipUdpVehicleAnnouncementMessageCounter());
+		assertEquals(0, doipUdpMessageHandlerTest.getOnDoipUdpVehicleAnnouncementMessageCounter());
 		DoipUdpVehicleAnnouncementMessage vam = doipUdpMessageHandlerTest.getLastDoipUdpVehicleAnnouncementMessage();
-		Assert.assertNull(vam);
+		assertNull(vam);
 
 		logger.info("<<< public void testUdpVehicleIdentRequestWithNotMatchingEid()");
 		logger.info("#############################################################################");
@@ -257,9 +256,9 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		sendUdpMessage(doipUdpMessage);
 		sleep(100);
 	
-		Assert.assertEquals(1, doipUdpMessageHandlerTest.getOnDoipUdpVehicleAnnouncementMessageCounter());
+		assertEquals(1, doipUdpMessageHandlerTest.getOnDoipUdpVehicleAnnouncementMessageCounter());
 		DoipUdpVehicleAnnouncementMessage vam = doipUdpMessageHandlerTest.getLastDoipUdpVehicleAnnouncementMessage();
-		Assert.assertNotNull(vam);
+		assertNotNull(vam);
 		
 		if (logger.isTraceEnabled()) {
 			logger.trace("<<< private void testUdpVehicleIdentRequest(DoipUdpMessage doipUdpMessage)");
@@ -282,15 +281,15 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		
 		sleep(100);
 		
-		Assert.assertEquals(1, doipTcpConnectionTest.getOnDoipTcpDiagnosticMessageNegAckCounter());
+		assertEquals(1, doipTcpConnectionTest.getOnDoipTcpDiagnosticMessageNegAckCounter());
 		DoipTcpDiagnosticMessageNegAck negAck = doipTcpConnectionTest.getLastDoipTcpDiagnosticMessageNegAck();
-		Assert.assertEquals(DoipTcpDiagnosticMessageNegAck.NACK_CODE_INVALID_SOURCE_ADDRESS, negAck.getAckCode());
+		assertEquals(DoipTcpDiagnosticMessageNegAck.NACK_CODE_INVALID_SOURCE_ADDRESS, negAck.getAckCode());
 		
 		if (doipTcpConnectionTest.getOnConnectionClosedCounter() == 0) {
 			sleep(100);
 		}
 		
-		Assert.assertEquals(1, doipTcpConnectionTest.getOnConnectionClosedCounter());
+		assertEquals(1, doipTcpConnectionTest.getOnConnectionClosedCounter());
 		
 		logger.info("<<< testTcpNotActivatedSourceAddress()");
 		logger.info("#############################################################################");
@@ -306,11 +305,11 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		DoipTcpRoutingActivationRequest doipTcpRoutingActivationRequest = new DoipTcpRoutingActivationRequest(0xF1, 0x00, -1);
 		conn.send(doipTcpRoutingActivationRequest);
 		sleep(100);
-		Assert.assertEquals(1,  doipTcpConnectionTest.getOnDoipTcpRoutingActivationResponseCounter());
+		assertEquals(1,  doipTcpConnectionTest.getOnDoipTcpRoutingActivationResponseCounter());
 		DoipTcpRoutingActivationResponse doipTcpRoutingActivationResponse = 
 				doipTcpConnectionTest.getLastDoipTcpRoutingActivationResponse();
-		Assert.assertNotNull(doipTcpRoutingActivationResponse);
-		Assert.assertEquals(0x10, doipTcpRoutingActivationResponse.getResponseCode());
+		assertNotNull(doipTcpRoutingActivationResponse);
+		assertEquals(0x10, doipTcpRoutingActivationResponse.getResponseCode());
 		
 		doipTcpConnectionTest.reset();
 	
@@ -319,19 +318,19 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		
 		sleep(100);
 		
-		Assert.assertEquals(1, doipTcpConnectionTest.getOnDoipTcpDiagnosticMessagePosAckCounter());
+		assertEquals(1, doipTcpConnectionTest.getOnDoipTcpDiagnosticMessagePosAckCounter());
 		DoipTcpDiagnosticMessagePosAck doipTcpDiagnosticMessagePosAck = 
 				doipTcpConnectionTest.getLastDoipTcpDiagnosticMessagePosAck();
-		Assert.assertEquals(4711, doipTcpDiagnosticMessagePosAck.getSourceAddress());
-		Assert.assertEquals(0xF1, doipTcpDiagnosticMessagePosAck.getTargetAddress() );
+		assertEquals(4711, doipTcpDiagnosticMessagePosAck.getSourceAddress());
+		assertEquals(0xF1, doipTcpDiagnosticMessagePosAck.getTargetAddress() );
 		
 		sleep(100);
-		Assert.assertEquals(1, doipTcpConnectionTest.getOnDoipTcpDiagnosticMessageCounter());
+		assertEquals(1, doipTcpConnectionTest.getOnDoipTcpDiagnosticMessageCounter());
 		doipTcpDiagnosticMessage = doipTcpConnectionTest.getLastDoipTcpDiagnosticMessage();
-		Assert.assertEquals(4711, doipTcpDiagnosticMessage.getSourceAddress());
-		Assert.assertEquals(0xF1, doipTcpDiagnosticMessage.getTargetAddress());
+		assertEquals(4711, doipTcpDiagnosticMessage.getSourceAddress());
+		assertEquals(0xF1, doipTcpDiagnosticMessage.getTargetAddress());
 		byte[] response = doipTcpDiagnosticMessage.getDiagnosticMessage();
-		Assert.assertArrayEquals(new byte[] {0x50,  0x03, 0x00, 0x32, (byte) 0x01, (byte) 0xF4 }, response);
+		assertArrayEquals(new byte[] {0x50,  0x03, 0x00, 0x32, (byte) 0x01, (byte) 0xF4 }, response);
 		
 		logger.info("<<< public void testTcpDiagnosticCommunication()");
 		logger.info("#############################################################################");
@@ -360,10 +359,10 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		DoipTcpRoutingActivationRequest doipMessage = new DoipTcpRoutingActivationRequest(0xE0, 0x00, 0);
 		doipTcpConnectionTest.getDoipTcpConnection().send(doipMessage);
 		sleep(100);
-		Assert.assertEquals(1, doipTcpConnectionTest.getOnDoipTcpRoutingActivationResponseCounter());
+		assertEquals(1, doipTcpConnectionTest.getOnDoipTcpRoutingActivationResponseCounter());
 		DoipTcpRoutingActivationResponse doipResponse = doipTcpConnectionTest.getLastDoipTcpRoutingActivationResponse();
-		Assert.assertNotNull(doipResponse);
-		Assert.assertEquals(0x10, doipResponse.getResponseCode());
+		assertNotNull(doipResponse);
+		assertEquals(0x10, doipResponse.getResponseCode());
 
 		if (logger.isTraceEnabled()) {
 			logger.trace("<<< public void performRoutingActivation()");
@@ -386,10 +385,10 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		DoipTcpRoutingActivationRequest doipMessage = new DoipTcpRoutingActivationRequest(0xE1, 0X00, 0);
 		doipTcpConnectionTest.getDoipTcpConnection().send(doipMessage);
 		sleep(100);
-		Assert.assertEquals(1, doipTcpConnectionTest.getOnDoipTcpRoutingActivationResponseCounter());
+		assertEquals(1, doipTcpConnectionTest.getOnDoipTcpRoutingActivationResponseCounter());
 		DoipTcpRoutingActivationResponse doipResponse = doipTcpConnectionTest.getLastDoipTcpRoutingActivationResponse();
-		Assert.assertNotNull(doipResponse);
-		Assert.assertEquals(0x02, doipResponse.getResponseCode());
+		assertNotNull(doipResponse);
+		assertEquals(0x02, doipResponse.getResponseCode());
 
 	
 		logger.info("<<< public void testRoutingActivationTwice()");
