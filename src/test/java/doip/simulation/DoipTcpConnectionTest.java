@@ -13,8 +13,8 @@ import doip.library.message.DoipTcpDiagnosticMessagePosAck;
 import doip.library.message.DoipTcpHeaderNegAck;
 import doip.library.message.DoipTcpRoutingActivationRequest;
 import doip.library.message.DoipTcpRoutingActivationResponse;
-import doip.logging.LogManager;
-import doip.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Helper class to test DoipTcpConnection

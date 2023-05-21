@@ -16,8 +16,8 @@ import doip.library.message.DoipUdpVehicleIdentRequest;
 import doip.library.message.DoipUdpVehicleIdentRequestWithEid;
 import doip.library.message.DoipUdpVehicleIdentRequestWithVin;
 import doip.library.util.LookupTable;
-import doip.logging.LogManager;
-import doip.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DoipUdpMessageHandlerTest implements DoipUdpMessageHandlerListener {
 	

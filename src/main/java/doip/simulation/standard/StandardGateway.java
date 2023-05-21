@@ -11,8 +11,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import doip.logging.LogManager;
-import doip.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import doip.simulation.nodes.Ecu;
 import doip.simulation.nodes.EcuConfig;
 import doip.simulation.nodes.EcuListener;

@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.LinkedList;
 
-import doip.logging.LogManager;
-import doip.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import doip.library.properties.EmptyPropertyValue;
 import doip.library.properties.MissingProperty;

@@ -2,8 +2,8 @@ package doip.simulation.standard;
 
 import java.util.Arrays;
 
-import doip.logging.LogManager;
-import doip.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import doip.simulation.nodes.Ecu;
 import doip.simulation.nodes.EcuConfig;
 import doip.library.message.UdsMessage;
