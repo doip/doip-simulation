@@ -24,6 +24,16 @@ http://automotive-doip.com/downloads/DoIP-Software-Documentation.pdf
 
 ==============================================================================
 
+                     Release Notes for Version: 1.5.1
+
+CHANGES
+=======
+
+- Issue #52:   Version can now be compiled as standalone project. Before it
+               was required to compile it within a composite project.
+
+==============================================================================
+
                      Release Notes for Version: 1.5.0
 
 CHANGES

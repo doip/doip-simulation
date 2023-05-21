@@ -3,8 +3,8 @@ package doip.simulation.nodes;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import doip.logging.LogManager;
-import doip.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import doip.library.message.UdsMessage;
 
