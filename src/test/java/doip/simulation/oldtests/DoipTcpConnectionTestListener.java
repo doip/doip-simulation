@@ -1,4 +1,4 @@
-package doip.simulation;
+package doip.simulation.oldtests;
 
 public interface DoipTcpConnectionTestListener {
 

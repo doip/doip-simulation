@@ -35,9 +35,29 @@ public class GatewayConfig {
 	private byte[] vin = null;
 	private int logicalAddress = 0;
 
+	private int maxNumberOfRegisterdConnections = -1;
 	private int maxByteArraySizeLogging = 0;
 	private int maxByteArraySizeLookup = 0;
 	
+	private int initialInactivityTime = 2000;
+	private int generalInactivityTime = 300000;
+	
+	public int getInitialInactivityTime() {
+		return initialInactivityTime;
+	}
+
+	public void setInitialInactivityTime(int initialInactivityTime) {
+		this.initialInactivityTime = initialInactivityTime;
+	}
+
+	public int getGeneralInactivityTime() {
+		return generalInactivityTime;
+	}
+
+	public void setGeneralInactivityTime(int generalInactivityTime) {
+		this.generalInactivityTime = generalInactivityTime;
+	}
+
 	private LinkedList<EcuConfig> ecuConfigList = new LinkedList<EcuConfig>();
 
 	public LinkedList<EcuConfig> getEcuConfigList() {
@@ -136,6 +156,11 @@ public class GatewayConfig {
 			this.tcpFiles = file.getOptionalPropertyAsString("tcp.files");
 			this.maxByteArraySizeLogging = file.getMandatoryPropertyAsInt("maxByteArraySize.logging");
 			this.maxByteArraySizeLookup = file.getMandatoryPropertyAsInt("maxByteArraySize.lookup");
+			this.maxNumberOfRegisterdConnections = file.getOptionalPropertyAsInt("maxNumberOfRegisteredConnections", 255);
+			
+			this.initialInactivityTime = file.getOptionalPropertyAsInt("T_TCP_Initial_Inactivity", 2000); // 2 seconds
+			this.generalInactivityTime = file.getOptionalPropertyAsInt("T_TCP_General_Inactivity", 300000); // 5 Minutes
+			
 			this.eid = file.getMandatoryPropertyAsByteArray("eid");
 			this.gid = file.getMandatoryPropertyAsByteArray("gid");
 			this.vin = file.getMandatoryPropertyAsByteArray("vin.hex");
@@ -232,5 +257,13 @@ public class GatewayConfig {
 
 	public void setMaxByteArraySizeLookup(int maxByteArraySizeLookup) {
 		this.maxByteArraySizeLookup = maxByteArraySizeLookup;
+	}
+	
+	public int getMaxNumberOfRegisteredConnections() {
+		return this.maxNumberOfRegisterdConnections;
+	}
+	
+	public void setMaxNumberOfRegisteredConnections(int max) {
+		this.maxNumberOfRegisterdConnections = max;
 	}
 }

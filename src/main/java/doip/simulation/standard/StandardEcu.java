@@ -4,7 +4,7 @@ import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import doip.simulation.nodes.Ecu;
+import doip.simulation.nodes.EcuBase;
 import doip.simulation.nodes.EcuConfig;
 import doip.library.message.UdsMessage;
 import doip.library.util.Conversion;
@@ -17,7 +17,7 @@ import doip.library.util.LookupTable;
  * with the function "stop()". A new request can be hand over to the ECU with
  * the function "putRequest(...)".
  */
-public class StandardEcu extends Ecu implements Runnable {
+public class StandardEcu extends EcuBase implements Runnable {
 
 	private static Logger logger = LogManager.getLogger(StandardEcu.class);
 
@@ -429,5 +429,15 @@ public class StandardEcu extends Ecu implements Runnable {
 		if (logger.isTraceEnabled()) {
 			logger.trace("<<< void stop()");
 		}
+	}
+
+	@Override
+	public String getNamme() {
+		return this.getConfig().getName();
+	}
+
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
 	}
 }

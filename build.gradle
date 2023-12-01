@@ -17,8 +17,10 @@ dependencies {
 	implementation group: 'org.apache.logging.log4j', name: 'log4j-core',       version: '2.19.0'
 
 	implementation 'com.github.doip:doip-library:2.0.0'
+	implementation 'com.github.doip:doip-simulation-api:2.0.0'
 
-	testImplementation 'com.github.doip:doip-junit:2.0.0'
+	testImplementation 'com.github.doip:doip-tester-toolkit:2.0.0'
+	testImplementation 'com.github.starcode88:starcode88-jtest:1.1.0'
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
 }
 
@@ -33,4 +35,20 @@ jar {
 test {
 	useJUnitPlatform()
 	systemProperty 'log4j.configurationFile', 'src/test/resources/log4j2.xml'
+	systemProperty 'tester.config', 'src/test/resources/tester.properties'
+	reports {
+		junitXml {
+			outputPerTestCase = true // defaults to false
+			//mergeReruns = true // defaults to false
+		}
+    }
+}
+
+tasks.withType(Test) {
+	maxParallelForks = 1
+}
+
+
+javadoc {
+	failOnError = false
 }

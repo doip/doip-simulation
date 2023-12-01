@@ -1,8 +1,12 @@
-package doip.simulation;
+package doip.simulation.oldtests;
 
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.List;
+
+import com.starcode88.jtest.InitializationError;
+import com.starcode88.jtest.TextBuilder;
+import static com.starcode88.jtest.Assertions.*;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -10,7 +14,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static doip.junit.Assertions.*;
 import doip.library.comm.DoipTcpConnection;
 import doip.library.message.DoipTcpDiagnosticMessage;
 import doip.library.message.DoipTcpRoutingActivationRequest;
@@ -62,7 +65,11 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 			config.setLocalPort(13400);
 			config.setMaxByteArraySizeLogging(64);
 			config.setMaxByteArraySizeLookup(64);
-			
+			config.setVin(new byte[] {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37});
+			config.setEid(new byte[] {(byte) 0xE1, (byte) 0xE2, (byte) 0xE3, (byte) 0xE4, (byte) 0xE5, (byte) 0xE6});
+			config.setGid(new byte[] {(byte) 0xA1, (byte) 0xA2, (byte) 0xA3, (byte) 0xA4, (byte) 0xA5, (byte) 0xA6});
+			config.setMaxNumberOfRegisteredConnections(4);
+	
 			List<EcuConfig> ecuConfigList = config.getEcuConfigList();
 			EcuConfig ecuConfig = new EcuConfig();
 			ecuConfig.setPhysicalAddress(815);
@@ -72,7 +79,8 @@ public class TestBusyRepeatRequest implements DoipTcpConnectionTestListener {
 			gateway = new BusyGateway(config);
 			gateway.start();
 		} catch (Exception e) {
-			logger.error(Helper.getExceptionAsString(e));
+			throw logger.throwing(new InitializationError(
+								TextBuilder.unexpectedException(e), e));
 		}
 		logger.info("<<< public static void setUpBeforeClass()");
 		logger.info("-----------------------------------------------------------------------------");

@@ -1,0 +1,46 @@
+{
+    "testcases": [
+        {
+            "id": "ID",
+            "description": "Description",
+            "testSteps": [
+                {
+                   "action": "Action",
+                    "expectedResult": "Expected Result"
+                }
+            ]
+        },
+        {
+            "id": "UT-0046-01",
+            "description": "Test vehicle identification",
+            "testSteps": [
+                {
+                    "action": "Send a vehicle identification message to the DoIP server",
+                    "expectedResult": "The DoIP server responds with a vehicle identification response message"
+                }
+            ]
+        },
+        {
+			"id": "TC-0082-01",
+			"description": "Check if the TCP connection will be closed when the general inactivity timer will expire",
+			"testSteps": [
+				{
+					"action": "Establish a connection to the DoIP server",
+					"expectedResult": "A connection could be established"
+				},
+				{
+					"action": "Perform routing activation",
+					"expectedResult": "Routing activation was successful"
+				},
+				{
+					"action": "Wait about 90% of the time given by general inactivity timer",
+					"expectedResult": "The connection hasn't been closed"
+				},
+				{
+					"action": "Wait about 20% of the time given by general inactivity timer (Which gives us a total time of 110% from the beginning)",
+					"expectedResult": "The connection has been closed"
+				}
+			]
+		}
+    ]
+}

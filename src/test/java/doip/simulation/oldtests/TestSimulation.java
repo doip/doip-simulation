@@ -1,4 +1,7 @@
-package doip.simulation;
+package doip.simulation.oldtests;
+
+import com.starcode88.jtest.TestCaseDescribed;
+import com.starcode88.jtest.TestExecutionError;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -12,7 +15,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static doip.junit.Assertions.*;
+import static com.starcode88.jtest.Assertions.*;
 import doip.library.comm.DoipTcpConnection;
 import doip.library.message.DoipTcpDiagnosticMessage;
 import doip.library.message.DoipTcpDiagnosticMessageNegAck;
@@ -28,11 +31,14 @@ import doip.library.util.Conversion;
 import doip.library.util.Helper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import doip.simulation.nodes.Gateway;
+import doip.simulation.api.Gateway;
 import doip.simulation.nodes.GatewayConfig;
 import doip.simulation.standard.StandardGateway;
 
-public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMessageHandlerTestListener {
+public class TestSimulation implements DoipTcpConnectionTestListener,
+										DoipUdpMessageHandlerTestListener {
+	
+	private static String BASE_ID = "1000";
 	
 	private static Logger logger = LogManager.getLogger(TestSimulation.class);
 	
@@ -62,6 +68,7 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 		try {
 			logger.info("-----------------------------------------------------------------------------");
 			logger.info(">>> public static void setUpBeforeClass()");
+			TestCaseDescribed.setUpBeforeClass("UT-" + BASE_ID);
 
 			localhost = InetAddress.getLocalHost();
 			
@@ -91,8 +98,8 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 			
 			if (gateway != null) {
 				gateway.stop();
-		}
-		gateway = null;
+				gateway = null;
+			}
 		
 		} catch (Exception e) {
 			logger.error("Unexpected " +  e.getClass().getName() + " in tearDownAfterClass()");
@@ -169,39 +176,37 @@ public class TestSimulation implements DoipTcpConnectionTestListener, DoipUdpMes
 	/**
 	 * [DoIP-051] Test that ECU needs to send a vehicle identification response
 	 * in case of reception of a vehicle identification request message
+	 * @throws TestExecutionError 
 	 * 
 	 * @throws IOException
 	 */
 	@Test
-	public void testUdpVehicleIdentRequest() {
-		logger.info("#############################################################################");
-		logger.info(">>> public void testVehicleIdentRequest()");
-		
+	public void testUdpVehicleIdentRequest() throws TestExecutionError {
+		TestCaseDescribed.runTest("UT-" + BASE_ID + "-01", () -> testUdpVehicleIdentRequestImpl());
+	}
+	
+	public void testUdpVehicleIdentRequestImpl() {
 		DoipUdpVehicleIdentRequest doipMessage = new DoipUdpVehicleIdentRequest();
-		testUdpVehicleIdentRequest(doipMessage);
-		
-		logger.info("<<< public void testVehicleIdentRequest()");
-		logger.info("#############################################################################");
+		testUdpVehicleIdentRequest(doipMessage);		
 	}
 	
 	
 	/**
 	 * [DoIP-52] Test that ECU needs to send a vehicle identification response
 	 * in case of reception of a vehicle identification request message with VIN
+	 * @throws TestExecutionError 
 	 * 
 	 * @throws IOException
 	 */
 	@Test
-	public void testUdpVehicleIdentRequestWithVin() throws IOException {
-		logger.info("#############################################################################");
-		logger.info(">>> public void testVehicleIdentRequestWithVin()");
-		
+	public void testUdpVehicleIdentRequestWithVin() throws TestExecutionError {
+		TestCaseDescribed.runTest("UT-" + BASE_ID + "02", () -> testUdpVehicleIdentRequestWithVinImpl());
+	}
+	
+	public void testUdpVehicleIdentRequestWithVinImpl() throws IOException {
 		byte[] vin = Conversion.asciiStringToByteArray("12345678901234567");
 		DoipUdpVehicleIdentRequestWithVin doipMessage = new DoipUdpVehicleIdentRequestWithVin(vin);
 		testUdpVehicleIdentRequest(doipMessage);
-		
-		logger.info("<<< public void testVehicleIdentRequestWithVin()");
-		logger.info("#############################################################################");
 	}
 	
 	/**

@@ -1,6 +1,4 @@
-package doip.simulation;
-
-import static doip.junit.Assertions.fail;
+package doip.simulation.oldtests;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -13,7 +11,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static doip.junit.Assertions.*;
+import static com.starcode88.jtest.Assertions.*;
 import doip.library.comm.DoipTcpConnection;
 import doip.library.message.DoipTcpDiagnosticMessage;
 import doip.library.message.DoipTcpDiagnosticMessagePosAck;
@@ -25,7 +23,7 @@ import doip.library.util.Conversion;
 import doip.library.util.Helper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import doip.simulation.nodes.Gateway;
+import doip.simulation.api.Gateway;
 import doip.simulation.nodes.GatewayConfig;
 import doip.simulation.standard.StandardGateway;
 
@@ -207,7 +205,6 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 		conn.send(doipUdsRequest);
 		
 		boolean result = this.waitForMessageCounter(1, 100);
-		assertEquals(true, result);
 		assertTrue(result);
 		DoipTcpDiagnosticMessagePosAck posAck = connTest.getLastDoipTcpDiagnosticMessagePosAck();
 		assertNotNull(posAck, "Didn't receive a positive acknowledgement message on diagnostic request");

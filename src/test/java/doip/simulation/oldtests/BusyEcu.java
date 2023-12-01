@@ -1,4 +1,4 @@
-package doip.simulation;
+package doip.simulation.oldtests;
 
 import doip.library.message.UdsMessage;
 import doip.simulation.nodes.EcuConfig;

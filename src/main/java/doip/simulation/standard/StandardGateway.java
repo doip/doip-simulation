@@ -10,18 +10,24 @@ import java.net.SocketException;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import doip.simulation.nodes.Ecu;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.MarkerManager;
+
+import doip.simulation.nodes.EcuBase;
 import doip.simulation.nodes.EcuConfig;
 import doip.simulation.nodes.EcuListener;
-import doip.simulation.nodes.Gateway;
+import doip.simulation.api.Gateway;
+import doip.simulation.api.ServiceState;
 import doip.simulation.nodes.GatewayConfig;
 import doip.library.comm.DoipTcpConnection;
 import doip.library.comm.DoipTcpConnectionListener;
 import doip.library.comm.DoipUdpMessageHandler;
 import doip.library.comm.DoipUdpMessageHandlerListener;
+import doip.library.exception.IllegalNullArgument;
 import doip.library.message.DoipTcpAliveCheckRequest;
 import doip.library.message.DoipTcpAliveCheckResponse;
 import doip.library.message.DoipTcpDiagnosticMessage;
@@ -60,6 +66,12 @@ public class StandardGateway
 
 	private static Logger logger = LogManager.getLogger(StandardGateway.class);
 
+	/** Log4j marker for function entry */
+	private static Marker enter = MarkerManager.getMarker("ENTER");
+	
+	/** Log4j marker for function exit */
+	private static Marker exit = MarkerManager.getMarker("EXIT'");
+
 	/**
 	 * Contains the configuration for this gateway
 	 */
@@ -86,13 +98,16 @@ public class StandardGateway
 	/**
 	 * List of TCP connections which have been established to the gateway
 	 */
-	private LinkedList<StandardTcpConnectionGateway> standardConnectionList = new LinkedList<StandardTcpConnectionGateway>();
+	//private LinkedList<StandardTcpConnectionGateway> standardConnectionList = new LinkedList<StandardTcpConnectionGateway>();
+	
+	// TODO: get max Connections from config
+	private ConnectionManager connectionManager;
 
 	/**
 	 * List of ECUs which are behind this gateway. To this ECUs the UDS messages 
 	 * will be send and the ECUs will send back their responses.
 	 */
-	private LinkedList<Ecu> ecuList = new LinkedList<Ecu>();
+	private LinkedList<EcuBase> ecuList = new LinkedList<EcuBase>();
 
 	/**
 	 * Every TCP connection (which will be running in a thread) 
@@ -105,6 +120,9 @@ public class StandardGateway
 	private Timer timerVam = null;
 
 	public StandardGateway(GatewayConfig config) {
+		String method = "public StandardGateway(GatewayConfig config)";
+
+		// Check config for invalid values
 		if (config.getName() == null) {
 			throw new IllegalArgumentException("The name of the gateway is null");
 		}
@@ -117,8 +135,49 @@ public class StandardGateway
 		if (config.getMaxByteArraySizeLookup() < 0) {
 			throw new IllegalArgumentException("The value of 'maxByteArraySizeLookup' in class GatewayConfig is negative, it must be greater or equal than 0");
 		}
+		if (config.getVin() == null) {
+			throw new IllegalArgumentException("The VIN isn't defined in the gateway configuration");
+		}
+		if (config.getVin().length != 17) {
+			throw new IllegalArgumentException("The value of 'vin' in the configuration of DoIP server isn't 17 bytes long");
+		}
+		if (config.getEid() == null) throw logger.throwing(new IllegalNullArgument("config.eid", method));
+		if (config.getGid() == null) throw logger.throwing(new IllegalNullArgument("config.gid", method));
+		
+		if (config.getMaxNumberOfRegisteredConnections() < 1) {
+			throw new IllegalArgumentException("The value of 'maxNumberOfRegisteredConnections' is lower than 1");
+		}
 		
 		this.config = config;
+		connectionManager = createConnectionManager();
+	}
+
+	@Override
+	public ServiceState getState() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getName() {
+		return config.getName();
+	}
+
+	@Override
+	public doip.simulation.api.Ecu getEcuByName(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<doip.simulation.api.Ecu> getEcus() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public ConnectionManager createConnectionManager() {
+		ConnectionManager connectionManager = new ConnectionManager(config.getMaxNumberOfRegisteredConnections());	
+		return connectionManager;
 	}
 
 	/**
@@ -133,7 +192,7 @@ public class StandardGateway
 		}
 		this.connectionInstanceCounter++;
 		StandardTcpConnectionGateway standardConnection = new StandardTcpConnectionGateway(
-				config.getName() + ":TCP-RECV-" + this.connectionInstanceCounter, config.getMaxByteArraySizeLogging());
+				config.getName() + ":TCP-RECV-" + this.connectionInstanceCounter, config.getMaxByteArraySizeLogging(), config.getInitialInactivityTime(), config.getGeneralInactivityTime());
 
 		if (logger.isTraceEnabled()) {
 			logger.trace("<<< StandardConnection createConnection()");
@@ -147,7 +206,7 @@ public class StandardGateway
 	 */
 	@Override
 	public void onConnectionAccepted(TcpServer tcpServer, Socket socket) {
-		logger.trace(">>> void onConnectionAccepted(Socket socket)");
+		logger.trace(enter, ">>> void onConnectionAccepted(Socket socket)");
 		
 		try {
 			socket.setTcpNoDelay(true);
@@ -157,40 +216,39 @@ public class StandardGateway
 		
 		StandardTcpConnectionGateway standardConnection = createConnection();
 		standardConnection.addListener(this);
-		this.standardConnectionList.add(standardConnection);
+		connectionManager.addConnection(standardConnection);
+		
 		standardConnection.start(socket);
-		logger.trace("<<< void onConnectionAccepted(Socket socket)");
+		logger.trace(exit, "<<< void onConnectionAccepted(Socket socket)");
 	}
 
 	@Override
 	public void onConnectionClosed(DoipTcpConnection doipTcpConnection) {
-		logger.trace(">>> public void onConnectionClosed(DoipTcpConnection doipTcpConnection)");
+		logger.trace(enter, ">>> public void onConnectionClosed(DoipTcpConnection doipTcpConnection)");
 		doipTcpConnection.removeListener(this);
-		this.standardConnectionList.remove(doipTcpConnection);
-		logger.trace("<<< public void onConnectionClosed(DoipTcpConnection doipTcpConnection)");
+		connectionManager.removeConnection((StandardTcpConnectionGateway) doipTcpConnection);
+		//this.standardConnectionList.remove(doipTcpConnection);
+		logger.trace(exit, "<<< public void onConnectionClosed(DoipTcpConnection doipTcpConnection)");
 	}
 
 	@Override
 	public void onDoipTcpAliveCheckRequest(DoipTcpConnection doipTcpConnection, DoipTcpAliveCheckRequest doipMessage) {
-		logger.trace(
+		logger.trace(enter, 
 				">>> public void onDoipTcpAliveCheckRequest(DoipTcpConnection doipTcpConnection, DoipTcpAliveCheckRequest doipMessage)");
 		logger.warn("No implementation");
 		// TODO
-		logger.trace(
+		logger.trace(exit,
 				"<<< public void onDoipTcpAliveCheckRequest(DoipTcpConnection doipTcpConnection, DoipTcpAliveCheckRequest doipMessage)");
 	}
 
 	@Override
 	public void onDoipTcpAliveCheckResponse(DoipTcpConnection doipTcpConnection,
 			DoipTcpAliveCheckResponse doipMessage) {
-		logger.trace(
+		logger.trace(enter,
 				">>> public void onDoipTcpAliveCheckResponse(DoipTcpConnection doipTcpConnection, DoipTcpAliveCheckResponse doipMessage)");
 		logger.warn("No implementation");
 
-		StandardTcpConnectionGateway standardConnection = (StandardTcpConnectionGateway) doipTcpConnection;
-		standardConnection.setLastDoipTcpAliveCheckResponse(doipMessage);
-
-		logger.trace(
+		logger.trace(exit,
 				"<<< public void onDoipTcpAliveCheckResponse(DoipTcpConnection doipTcpConnection, DoipTcpAliveCheckResponse doipMessage)");
 	}
 
@@ -200,7 +258,7 @@ public class StandardGateway
 	@Override
 	public void onDoipTcpDiagnosticMessage(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessage doipMessage) {
 		if (logger.isTraceEnabled()) {
-			logger.trace(">>> void onDoipTcpDiagnosticMessage(" + "DoipTcpConnection doipTcpConnection, "
+			logger.trace(enter, ">>> void onDoipTcpDiagnosticMessage(" + "DoipTcpConnection doipTcpConnection, "
 					+ "DoipTcpDiagnosticMessage doipMessage)");
 		}
 		// The parameter doipTcpConnection is instance of StandardConnection,
@@ -240,8 +298,8 @@ public class StandardGateway
 
 		// Iterate over all ECUs and find ECUs which have a 
 		// physical or functional address like target address.
-		LinkedList<Ecu> targetEcus = new LinkedList<Ecu>();
-		for (Ecu tmpEcu : this.ecuList) {
+		LinkedList<EcuBase> targetEcus = new LinkedList<EcuBase>();
+		for (EcuBase tmpEcu : this.ecuList) {
 			if ((tmpEcu.getConfig().getPhysicalAddress() == target) ||
 				 (tmpEcu.getConfig().getFunctionalAddress() == target)) {
 				targetEcus.add(tmpEcu);
@@ -270,7 +328,7 @@ public class StandardGateway
 		doipTcpConnection.send(posAck);
 		
 		// Send UDS message to ECU
-		for (Ecu tmpEcu : targetEcus) {
+		for (EcuBase tmpEcu : targetEcus) {
 			if (tmpEcu.getConfig().getPhysicalAddress() == target) {
 				UdsMessage request = new UdsMessage(source, target, UdsMessage.PHYSICAL, diagnosticMessage);
 				tmpEcu.putRequest(request);
@@ -281,7 +339,7 @@ public class StandardGateway
 		}
 
 		if (logger.isTraceEnabled()) {
-			logger.trace(
+			logger.trace(exit,
 					"<<< void onDoipTcpDiagnosticMessage(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessage doipMessage)");
 		}
 	}
@@ -289,20 +347,20 @@ public class StandardGateway
 	@Override
 	public void onDoipTcpDiagnosticMessageNegAck(DoipTcpConnection doipTcpConnection,
 			DoipTcpDiagnosticMessageNegAck doipMessage) {
-		logger.trace(
+		logger.trace(enter,
 				">>> public void onDoipTcpDiagnosticMessageNegAck(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessageNegAck doipMessage)");
 		logger.info("Received DoIP diagnostic message negative acknowledgement, no further action required");
-		logger.trace(
+		logger.trace(exit,
 				"<<< public void onDoipTcpDiagnosticMessageNegAck(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessageNegAck doipMessage)");
 	}
 
 	@Override
 	public void onDoipTcpDiagnosticMessagePosAck(DoipTcpConnection doipTcpConnection,
 			DoipTcpDiagnosticMessagePosAck doipMessage) {
-		logger.trace(
+		logger.trace(enter,
 				">>> public void onDoipTcpDiagnosticMessagePosAck(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessagePosAck doipMessage)");
 		logger.info("Received DoIP diagnostic message positive acknowledgement, no further action required");
-		logger.trace(
+		logger.trace(exit,
 				"<<< public void onDoipTcpDiagnosticMessagePosAck(DoipTcpConnection doipTcpConnection, DoipTcpDiagnosticMessagePosAck doipMessage)");
 	}
 
@@ -311,26 +369,26 @@ public class StandardGateway
 	 */
 	@Override
 	public void onDoipTcpHeaderNegAck(DoipTcpConnection doipTcpConnection, DoipTcpHeaderNegAck doipMessage) {
-		logger.trace(">>> public void onDoipHeaderNegAck("
+		logger.trace(enter, ">>> public void onDoipHeaderNegAck("
 				+ "DoipTcpConnection doipTcpConnection, DoipHeaderNegAck doipMessage)");
 		
 		logger.warn("Received generic DoIP header negative acknowledge, no further action required.");
 		
-		logger.trace("<<< public void onDoipHeaderNegAck("
+		logger.trace(exit, "<<< public void onDoipHeaderNegAck("
 				+ "DoipTcpConnection doipTcpConnection, DoipHeaderNegAck doipMessage)");
 	}
 
 	/**
 	 * [DoIP-100] The DoIP entity shall process routing activation as specified
 	 * in figure 9.
-	 * Implements the routing activation handler according to figure 9 on page 31 of
-	 * the ISO 13400-2:2012.
+	 * Implements the routing activation handler according to figure 22 on page 64 of
+	 * the ISO 13400-2:2019.
 	 */
 	@Override
 	public void onDoipTcpRoutingActivationRequest(DoipTcpConnection doipTcpConnection,
 			DoipTcpRoutingActivationRequest doipMessage) {
 		if (logger.isTraceEnabled()) {
-			logger.trace(
+			logger.trace(enter,
 					">>> public void onDoipTcpRoutingActivationRequest(DoipTcpConnection doipTcpConnection, DoipTcpRoutingActivationRequest doipMessage)");
 		}
 
@@ -369,34 +427,40 @@ public class StandardGateway
 		// Call socket handler which returns the response code.
 		// This can be positive result (0x10 = routing activation accepted) 
 		// or a negative result.
-		int responseCode = routingActivationSocketHandler(standardConnection, doipMessage);
-
-		if (logger.isDebugEnabled()) {
-			logger.debug("Result from routing activation socket handler was " + responseCode);
-		}
+		//int responseCode = routingActivationSocketHandler(standardConnection, doipMessage);
+		// TODO: Call the routing activation socket handler in a background thread
+		// to get the reader thread free for other DoIP messages while
+		// connection manager performs a alive check
+		int responseCode = connectionManager.routingActivationSocketHandler(standardConnection, doipMessage);
+		logger.debug(String.format("Response code from socket handler is %02X", responseCode));
 
 		DoipTcpRoutingActivationResponse doipResponse = new DoipTcpRoutingActivationResponse(source,
 				this.config.getLogicalAddress(), responseCode, 0);
 		doipTcpConnection.send(doipResponse);
 
-		if (responseCode != 0x10) {
+		if (responseCode != 0x10 && responseCode != 0x11) {
 			if (logger.isDebugEnabled()) {
 				logger.debug("Close socket because result from socket handler was not 0x10");
 			}
 			doipTcpConnection.stop();
+			// No need to remove socket from list of connections
+			// because that will be done on callback onConnectionClosed
 		}
 
 		if (logger.isTraceEnabled()) {
-			logger.trace(
+			logger.trace(exit,
 					"<<< public void onDoipTcpRoutingActivationRequest(DoipTcpConnection doipTcpConnection, DoipTcpRoutingActivationRequest doipMessage)");
 		}
 	}
 
 	/**
+	 * Implements the routing activation socket handler as figure 26 from ISO 13400-2:2019.
+	 * It is NOT the routing activation handler as described in figure 22 from ISO 13400-2:2019.
 	 * @param connection
 	 * @param routingActivationRequest
 	 * @return
 	 */
+	/*
 	private int routingActivationSocketHandler(StandardTcpConnectionGateway connection,
 			DoipTcpRoutingActivationRequest routingActivationRequest) {
 		if (logger.isTraceEnabled()) {
@@ -408,7 +472,7 @@ public class StandardGateway
 		int count = getNumberOfRegisteredSockets();
 		if (count == 0) {
 			connection.setRegisteredSourceAddress(source);
-			connection.setState(StandardTcpConnectionGateway.STATE_REGISTERED_ROUTING_ACTIVE);	
+			//connection.setState(StandardTcpConnectionGateway.STATE_REGISTERED_ROUTING_ACTIVE);	
 			if (logger.isTraceEnabled()) {
 				logger.trace("<<< private int routingActivationSocketHandler(StandardTcpConnection connection, DoipTcpRoutingActivationRequest routingActivationRequest)");
 			}
@@ -446,13 +510,14 @@ public class StandardGateway
 		connection.setRegisteredSourceAddress(source);
 		
 		// Currently no authentication and confirmation is required
-		connection.setState(StandardTcpConnectionGateway.STATE_REGISTERED_ROUTING_ACTIVE);
+		//connection.setState(StandardTcpConnectionGateway.STATE_REGISTERED_ROUTING_ACTIVE);
 		
 		if (logger.isTraceEnabled()) {
 			logger.trace("<<< private int routingActivationSocketHandler(StandardTcpConnection connection, DoipTcpRoutingActivationRequest routingActivationRequest)");
 		}
 		return 0x10;
 	}
+	*/
 
 	/**
 	 * Returns the connection on which the source address given by parameter
@@ -461,6 +526,7 @@ public class StandardGateway
 	 * @param source
 	 * @return
 	 */
+	/*
 	public StandardTcpConnectionGateway getRegisteredConnection(int source) {
 		Iterator<StandardTcpConnectionGateway> iter = this.standardConnectionList.iterator();
 		while (iter.hasNext()) {
@@ -470,13 +536,14 @@ public class StandardGateway
 			}
 		}
 		return null;
-	}
+	}*/
 
 	/**
 	 * Returns the number of registered sockets
 	 * 
 	 * @return The number of registered sockets
 	 */
+	/*
 	public int getNumberOfRegisteredSockets() {
 		int count = 0;
 		Iterator<StandardTcpConnectionGateway> iter = this.standardConnectionList.iterator();
@@ -487,22 +554,22 @@ public class StandardGateway
 			}
 		}
 		return count;
-	}
+	}*/
 
 	@Override
 	public void onDoipTcpRoutingActivationResponse(DoipTcpConnection doipTcpConnection,
 			DoipTcpRoutingActivationResponse doipMessage) {
-		logger.trace(
+		logger.trace(enter,
 				">>> public void onDoipTcpRoutingActivationResponse(DoipTcpConnection doipTcpConnection, DoipTcpRoutingActivationResponse doipMessage)");
 		logger.warn("No implementation");
-		logger.trace(
+		logger.trace(exit,
 				"<<< public void onDoipTcpRoutingActivationResponse(DoipTcpConnection doipTcpConnection, DoipTcpRoutingActivationResponse doipMessage)");
 	}
 
 	@Override
 	public void onDoipUdpDiagnosticPowerModeRequest(DoipUdpDiagnosticPowerModeRequest doipMessage,
 			DatagramPacket packet) {
-		logger.trace(
+		logger.trace(enter,
 				">>> void processDoipUdpDiagnosticPowerModeRequest(DoipUdpDiagnosticPowerModeRequest doipMessage, DatagramPacket packet)");
 		DoipUdpDiagnosticPowerModeResponse doipResponse = new DoipUdpDiagnosticPowerModeResponse(0);
 		byte[] response = doipResponse.getMessage();
@@ -511,26 +578,29 @@ public class StandardGateway
 		} catch (IOException e) {
 			logger.error(Helper.getExceptionAsString(e));
 		}
-		logger.trace(
+		logger.trace(exit,
 				"<<< void processDoipUdpDiagnosticPowerModeRequest(DoipUdpDiagnosticPowerModeRequest doipMessage, DatagramPacket packet)");
 	}
 
 	@Override
 	public void onDoipUdpDiagnosticPowerModeResponse(DoipUdpDiagnosticPowerModeResponse doipMessage,
 			DatagramPacket packet) {
-		logger.trace(
+		logger.trace(enter,
 				">>> void processDoipUdpDiagnosticPowerModeResponse(DoipUdpDiagnosticPowerModeResponse doipMessage, DatagramPacket packet)");
 		logger.warn("Received unexpected diagnostic power mode response");
-		logger.trace(
+		logger.trace(exit,
 				"<<< void processDoipUdpDiagnosticPowerModeResponse(DoipUdpDiagnosticPowerModeResponse doipMessage, DatagramPacket packet)");
 	}
 
 	@Override
 	public void onDoipUdpEntityStatusRequest(DoipUdpEntityStatusRequest doipMessage, DatagramPacket packet) {
-		logger.trace(
+		logger.trace(enter,
 				">>> void processDoipUdpEntityStatusRequest(DoipUdpEntityStatusRequest doipMessage, DatagramPacket packet)");
+		// TODO: get current number of connections
+//		DoipUdpEntityStatusResponse doipResponse = new DoipUdpEntityStatusResponse(0, 255,
+//				this.standardConnectionList.size(), 65536);
 		DoipUdpEntityStatusResponse doipResponse = new DoipUdpEntityStatusResponse(0, 255,
-				this.standardConnectionList.size(), 65536);
+				0, 65536);
 		byte[] response = doipResponse.getMessage();
 		try {
 			this.sendDatagramPacket(response, response.length, packet.getAddress(), packet.getPort());
@@ -538,43 +608,43 @@ public class StandardGateway
 			logger.error(Helper.getExceptionAsString(e));
 		}
 
-		logger.trace(
+		logger.trace(exit,
 				"<<< void processDoipUdpEntityStatusRequest(DoipUdpEntityStatusRequest doipMessage, DatagramPacket packet)");
 	}
 
 	@Override
 	public void onDoipUdpEntityStatusResponse(DoipUdpEntityStatusResponse doipMessage, DatagramPacket packet) {
-		logger.trace(
+		logger.trace(enter,
 				">>> void processDoipUdpEntityStatusResponse(DoipUdpEntityStatusResponse doipMessage, DatagramPacket packet)");
 		// Nothing to do
-		logger.trace(
+		logger.trace(exit,
 				"<<< void processDoipUdpEntityStatusResponse(DoipUdpEntityStatusResponse doipMessage, DatagramPacket packet)");
 	}
 
 	@Override
 	public void onDoipUdpHeaderNegAck(DoipUdpHeaderNegAck doipMessage, DatagramPacket packet) {
-		logger.trace(">>> void processDoipHeaderNegAck(DoipHeaderNegAck doipMessage, DatagramPacket packet)");
+		logger.trace(enter, ">>> void processDoipHeaderNegAck(DoipHeaderNegAck doipMessage, DatagramPacket packet)");
 		if (logger.isDebugEnabled()) {
 			logger.debug("Received DoIP header negative acknowledge, message will be discarged");
 		}
-		logger.trace("<<< void processDoipHeaderNegAck(DoipHeaderNegAck doipMessage, DatagramPacket packet)");
+		logger.trace(exit, "<<< void processDoipHeaderNegAck(DoipHeaderNegAck doipMessage, DatagramPacket packet)");
 	}
 
 	@Override
 	public void onDoipUdpVehicleAnnouncementMessage(DoipUdpVehicleAnnouncementMessage doipMessage,
 			DatagramPacket packet) {
-		logger.trace(
+		logger.trace(enter,
 				">>> void processDoipUdpVehicleAnnouncementMessage(DoipUdpVehicleAnnouncementMessage doipMessage, DatagramPacket packet)");
 		if (logger.isDebugEnabled()) {
 			logger.debug("Received DoIP vehicle announcement message, message will be discarged");
 		}
-		logger.trace(
+		logger.trace(exit,
 				"<<< void processDoipUdpVehicleAnnouncementMessage(DoipUdpVehicleAnnouncementMessage doipMessage, DatagramPacket packet)");
 	}
 
 	@Override
 	public void onDoipUdpVehicleIdentRequest(DoipUdpVehicleIdentRequest doipMessage, DatagramPacket packet) {
-		logger.trace(
+		logger.trace(enter,
 				">>> public void onDoipUdpVehicleIdentRequest(DoipUdpVehicleIdentRequest doipMessage, DatagramPacket packet)");
 		
 		logger.info("Received DoIP UDP vehicle identification request -> will send DoIP UDP vehicle identification response");
@@ -586,14 +656,14 @@ public class StandardGateway
 		} catch (IOException e) {
 			logger.error(Helper.getExceptionAsString(e));
 		}
-		logger.trace(
+		logger.trace(exit,
 				"<<< public void onDoipUdpVehicleIdentRequest(DoipUdpVehicleIdentRequest doipMessage, DatagramPacket packet)");
 	}
 
 	@Override
 	public void onDoipUdpVehicleIdentRequestWithEid(DoipUdpVehicleIdentRequestWithEid doipMessage,
 			DatagramPacket packet) {
-		logger.trace(
+		logger.trace(enter,
 				">>> public void onDoipUdpVehicleIdentRequestWithEid(DoipUdpVehicleIdentRequestWithEid doipMessage, DatagramPacket packet)");
 		
 		logger.info("Received DoIP UDP vehicle identification request with EID -> will check EID");
@@ -618,14 +688,14 @@ public class StandardGateway
 		}
 			
 
-		logger.trace(
+		logger.trace(exit,
 				"<<< public void onDoipUdpVehicleIdentRequestWithEid(DoipUdpVehicleIdentRequestWithEid doipMessage, DatagramPacket packet)");
 	}
 
 	@Override
 	public void onDoipUdpVehicleIdentRequestWithVin(DoipUdpVehicleIdentRequestWithVin doipMessage,
 			DatagramPacket packet) {
-		logger.trace(
+		logger.trace(enter,
 				">>> public void onDoipUdpVehicleIdentRequestWithVin(DoipUdpVehicleIdentRequestWithVin doipMessage, DatagramPacket packet)");
 		
 		logger.info("Received DoIP UDP vehicle identification request with VIN -> will check VIN");
@@ -649,7 +719,7 @@ public class StandardGateway
 			logger.info("VIN didn't match -> will not send a DoIP UDP vehicle identification response");
 		}
 
-		logger.trace(
+		logger.trace(exit,
 				"<<< public void onDoipUdpVehicleIdentRequestWithVin(DoipUdpVehicleIdentRequestWithVin doipMessage, DatagramPacket packet)");
 	}
 
@@ -658,16 +728,16 @@ public class StandardGateway
 	 * of an ECU.
 	 */
 	public void prepareEcus() {
-		logger.trace(">>> public void prepareEcus()");
+		logger.trace(enter, ">>> public void prepareEcus()");
 		LinkedList<EcuConfig> ecuConfigList = this.config.getEcuConfigList();
 		Iterator<EcuConfig> iter = ecuConfigList.iterator();
 		while (iter.hasNext()) {
 			EcuConfig ecuConfig = iter.next();
-			Ecu ecu = this.createEcu(ecuConfig);
+			EcuBase ecu = this.createEcu(ecuConfig);
 			ecu.addListener(this);
 			this.ecuList.add(ecu);
 		}
-		logger.trace("<<< public void prepareEcus()");
+		logger.trace(exit, "<<< public void prepareEcus()");
 	}
 
 	/**
@@ -677,15 +747,15 @@ public class StandardGateway
 	 * @param config The configuration of the ECU
 	 * @return A new instance of the ECU
 	 */
-	public Ecu createEcu(EcuConfig config) {
+	public EcuBase createEcu(EcuConfig config) {
 		if (logger.isTraceEnabled()) {
-			logger.trace(">>> public StandardEcu createEcu(EcuConfig config)");
+			logger.trace(enter, ">>> public StandardEcu createEcu(EcuConfig config)");
 		}
 
 		StandardEcu ecu = new StandardEcu(config);
 
 		if (logger.isTraceEnabled()) {
-			logger.trace("<<< public StandardEcu createEcu(EcuConfig config)");
+			logger.trace(exit, "<<< public StandardEcu createEcu(EcuConfig config)");
 		}
 		return ecu;
 	}
@@ -737,8 +807,24 @@ public class StandardGateway
 
 		// Find the "StandardConnection" on which the message need to
 		// get send out.
-		boolean found = false;
-		Iterator<StandardTcpConnectionGateway> iter = this.standardConnectionList.iterator();
+		StandardTcpConnectionGateway targetConnection = connectionManager.getConnectionBySourceAddress(target); 
+		if (targetConnection != null) {
+			DoipTcpDiagnosticMessage doipMessage = new DoipTcpDiagnosticMessage(source, target, diagnosticMessage);
+			if (logger.isInfoEnabled()) {
+				logger.info("UDS-SEND: Source = " + message.getSourceAdrress() + ", target = "
+						+ message.getTargetAddress() + ", data = "
+						+ Conversion.byteArrayToHexString(diagnosticMessage));
+			}
+			targetConnection.send(doipMessage);
+		} else {
+			if (logger.isErrorEnabled()) {
+				logger.error("Could not find TCP connection to send out DoIP message "
+						+ "because target address of the diagnostic message does not "
+						+ "match and source address in the available TCP connections.");
+			}
+		}
+
+		/*
 		while (iter.hasNext()) {
 			StandardTcpConnectionGateway standardConnection = iter.next();
 			if (standardConnection.getRegisteredSourceAddress() == target) {
@@ -753,13 +839,9 @@ public class StandardGateway
 				break;
 			}
 		}
+		
 		if (!found) {
-			if (logger.isErrorEnabled()) {
-				logger.error("Could not find TCP connection to send out DoIP message "
-						+ "because target address of the diagnostic message does not "
-						+ "match and source address in the available TCP connections.");
-			}
-		}
+		}*/
 
 		logger.trace("<<< public void sendUdsMessage(UdsMessage message)");
 	}
@@ -823,7 +905,7 @@ public class StandardGateway
 			throw e;
 		}
 		if (logger.isTraceEnabled()) {
-			logger.trace("<<< public void start()");
+			logger.trace(enter, "<<< public void start()");
 		}
 	}
 
@@ -831,9 +913,9 @@ public class StandardGateway
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public void startEcus()");
 		}
-		Iterator<Ecu> iter = this.ecuList.iterator();
+		Iterator<EcuBase> iter = this.ecuList.iterator();
 		while (iter.hasNext()) {
-			Ecu ecu = iter.next();
+			EcuBase ecu = iter.next();
 			ecu.start();
 		}
 		if (logger.isTraceEnabled()) {
@@ -891,11 +973,7 @@ public class StandardGateway
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public void stopConnections()");
 		}
-		Iterator<StandardTcpConnectionGateway> iter = this.standardConnectionList.iterator();
-		while (iter.hasNext()) {
-			StandardTcpConnectionGateway connection = iter.next();
-			connection.stop();
-		}
+		connectionManager.stopAllConnections();
 		if (logger.isTraceEnabled()) {
 			logger.trace("<<< public void stopConnections()");
 		}
@@ -903,9 +981,9 @@ public class StandardGateway
 
 	public void stopEcus() {
 		logger.trace(">>> public void stopEcus()");
-		Iterator<Ecu> iter = this.ecuList.iterator();
+		Iterator<EcuBase> iter = this.ecuList.iterator();
 		while (iter.hasNext()) {
-			Ecu ecu = iter.next();
+			EcuBase ecu = iter.next();
 			ecu.stop();
 		}
 		logger.trace("<<< public void stopEcus()");
@@ -913,9 +991,9 @@ public class StandardGateway
 
 	public void unprepareEcus() {
 		logger.trace(">>> public void unprepareEcus()");
-		Iterator<Ecu> iter = this.ecuList.iterator();
+		Iterator<EcuBase> iter = this.ecuList.iterator();
 		while (iter.hasNext()) {
-			Ecu ecu = iter.next();
+			EcuBase ecu = iter.next();
 			ecu.removeListener(this);
 		}
 		this.ecuList.clear();
@@ -926,6 +1004,8 @@ public class StandardGateway
 	public void onTimerExpired(Timer timer) {
 		// The only timer which will be used is the VAM timer.
 		// Send VAM
+		String method = "public void onTimerExpired(Timer timer)";
+		logger.trace(enter, ">>> " + method);
 		InetAddress broadcast = config.getBroadcastAddress();
 		DoipUdpVehicleAnnouncementMessage response = new DoipUdpVehicleAnnouncementMessage(config.getVin(),
 				config.getLogicalAddress(), config.getEid(), config.getGid(), 0, 0);
@@ -936,6 +1016,7 @@ public class StandardGateway
 			logger.error("IOException occured when trying to send vehicle announcement message to broadcast address");
 			logger.error(Helper.getExceptionAsString(e));
 		};
+		logger.trace(exit, "<<< " + method);
 	}
 
 	
@@ -947,7 +1028,7 @@ public class StandardGateway
 	 * Getter for member 'ecuList'
 	 * @return
 	 */
-	public LinkedList<Ecu> getEcuList() {
+	public LinkedList<EcuBase> getEcuList() {
 		return ecuList;
 	}
 
@@ -955,9 +1036,9 @@ public class StandardGateway
 	 * Getter for member 'standardConnectionList' 
 	 * @return
 	 */
-	public LinkedList<StandardTcpConnectionGateway> getStandardConnectionList() {
+	/*public LinkedList<StandardTcpConnectionGateway> getStandardConnectionList() {
 		return standardConnectionList;
-	}
+	}*/
 	
 
 	/**
@@ -967,4 +1048,5 @@ public class StandardGateway
 	public GatewayConfig getConfig() {
 		return this.config;
 	}
+
 }

@@ -7,19 +7,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import doip.library.message.UdsMessage;
+import doip.simulation.api.Ecu;
 
-public abstract class Ecu {
+public abstract class EcuBase implements Ecu {
 
 	/**
 	 * log4j2 logger
 	 */
-	private static Logger logger = LogManager.getLogger(Ecu.class);
+	private static Logger logger = LogManager.getLogger(EcuBase.class);
 
 	private EcuConfig config = null;
 
 	private LinkedList<EcuListener> listeners = new LinkedList<EcuListener>();
 
-	public Ecu(EcuConfig config) {
+	public EcuBase(EcuConfig config) {
 		if (config.getName() == null) {
 			throw new IllegalArgumentException("The value of 'name' in class EcuConfig is null, it must not be null");
 		}

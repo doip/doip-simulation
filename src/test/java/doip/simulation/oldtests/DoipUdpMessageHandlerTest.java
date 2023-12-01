@@ -1,4 +1,4 @@
-package doip.simulation;
+package doip.simulation.oldtests;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;

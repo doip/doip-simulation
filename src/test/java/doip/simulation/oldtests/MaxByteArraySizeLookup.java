@@ -1,7 +1,6 @@
-package doip.simulation;
+package doip.simulation.oldtests;
 
-import static doip.junit.Assertions.assertFalse;
-import static doip.junit.Assertions.assertTrue;
+import static com.starcode88.jtest.Assertions.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

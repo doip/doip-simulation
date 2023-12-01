@@ -55,7 +55,7 @@ public class EcuConfig {
 		PropertyFile file = new PropertyFile(filename);
 		this.name = file.getMandatoryPropertyAsString("name");
 		this.physicalAddress = file.getMandatoryPropertyAsInt("address.physical");
-		this.functionalAddress = file.getOptionalPropertyAsInt("address.functional");
+		this.functionalAddress = file.getOptionalPropertyAsInt("address.functional", -1);
 		String udsFiles = file.getOptionalPropertyAsString("uds.files");
 
 		this.udsLookupTable = createLookupTable();

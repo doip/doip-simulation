@@ -1,50 +1,89 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration>
-	<Appenders>
-		<Console name="Console" target="SYSTEM_OUT">
-			<!-- 
-				The first section defines logging of current time.
+	<Properties>
+			<!--
+				%d defines logging of current time.
 				%t stands for the thread name
 				%level will print the log level (INFO, WARN, TRACE, ...)
 				%logger will print the name of the logger (e.g. doip.simulation)
 				%m is the log message.
-				%n is a new line character.			
+				%ex is the exception
+				%n is a new line character.
 			 -->
-			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%-16t]  %-6level %-56logger - %msg%n" />
+		<Property name="layout">%d{HH:mm:ss.SSS} [%-16t]  %-68logger %-12X{context} %-16level - %msg%ex{15}%n</Property>
+	</Properties>
+	<CustomLevels>
+             <!--
+                    OFF   =   0
+                    FATAL = 100
+                    ERROR = 200
+                    WARN  = 300
+                    INFO  = 400
+                    DEBUG = 500
+                    TRACE = 600
+                    ALL   = Integer.MAX_VALUE
+             -->	
+         <!-- Assertions should always be visible, so we set them to level "FATAL" -->
+		<CustomLevel name="ASSERTION_FAILED" intLevel="100" />
+	</CustomLevels>
+	<Appenders>
+		<Console name="console" target="SYSTEM_OUT">
+			<PatternLayout pattern="${layout}" />
 		</Console>
-		<File name="File" fileName="doip-simulation.log" append="false">
-			<PatternLayout pattern="%d{HH:mm:ss.SSS} [%-16t]  %-6level %-56logger - %msg%n" />
+		<File name="doip" fileName="./logs/doip-tester.log" append="false">
+			<PatternLayout pattern="${layout}" />
 		</File>
+		<File name="trace" fileName="./logs/trace.log" append="false">
+			<PatternLayout pattern="${layout}" />
+		</File>
+		<File name="info" fileName="./logs/info.log" append="false">
+			<PatternLayout pattern="${layout}" />
+		</File>
+		<File name="error" fileName="./logs/error.log" append="false">
+			<PatternLayout pattern="${layout}" />
+		</File>
+		<File name="uml" fileName="./logs/uml.log" append="false">
+			<Filters>
+				<MarkerFilter marker="UML" onMatch="NEUTRAL" onMismatch="DENY"/>
+				<!--
+				<ContextMapFilter onMatch="NEUTRAL" onMismatch="DENY">
+					<KeyValuePair key="context" value="tester"/>>
+				</ContextMapFilter>-->
+			</Filters>
+			<PatternLayout pattern="%msg%ex{1}%n" />
+		</File>
+		<Socket name="socket" host="192.168.178.1" port="13500" protocol="UDP">
+			<PatternLayout pattern="%d{HH:mm:ss.SSS} %-16level - %msg%ex{10}%n"/>
+		</Socket>
 	</Appenders>
 	<Loggers>
-		<!-- Every logger starting with "doip" will print trace level -->
-		<Logger name="doip" level="debug" additivity="false">
-			<AppenderRef ref="Console" />
-			<AppenderRef ref="File" />
-		</Logger>
-		<!-- 
-			The logger of "doip.library.comm.DoipTcpStream buffer is very verbose.
-			Therefore the log level will be set to error.
-		 -->
-		<Logger name="doip.library.comm.DoipTcpStreamBuffer" level="warn" additivity="false">
-			<AppenderRef ref="Console" />
-			<AppenderRef ref="File" />
-		</Logger>
-		
-		<!-- Set log level for stream buffer -->
-		<Logger name="doip.library.util.StreamBuffer" level="warn" additivity="false">
-			<AppenderRef ref="Console" />
-			<AppenderRef ref="File" />
-		</Logger>
-		
-		<Logger name="doip.tester" level="trace" additivity="false">
-			<AppenderRef ref="Console" />
-			<AppenderRef ref="File" />
-		</Logger>
-		
-		<Root level="info">
-			<AppenderRef ref="Console" />
-			<AppenderRef ref="File" />
+		<Root level="TRACE"> <!-- The root logger must have level trace -->
+			<AppenderRef ref="console" level="INFO"/>
+			<AppenderRef ref="doip"    level="INFO"/>
+			<AppenderRef ref="trace"   level="TRACE"/>
+			<AppenderRef ref="info"    level="INFO"/>
+			<AppenderRef ref="error"   level="ERROR"/>
+	 		<AppenderRef ref="socket"  level="INFO"/>
+	 		<AppenderRef ref="uml"     level="DEBUG"/>
 		</Root>
+
+		<!-- Following two classes are very verbose, we wet them to level "WARN" -->
+		<!-- Possible bug will require more detailed logging -->
+		<Logger name="doip.library.comm.DoipTcpStreamBuffer" level="WARN" additivity="false">
+			<AppenderRef ref="console" />
+ 			<AppenderRef ref="doip"/>
+			<AppenderRef ref="trace" />
+			<AppenderRef ref="info" />
+			<AppenderRef ref="error" />
+	 		<AppenderRef ref="socket" level="INFO"/>
+		</Logger>
+		<Logger name="doip.library.util.StreamBuffer" level="WARN" additivity="false">
+			<AppenderRef ref="console" />
+ 			<AppenderRef ref="doip"/>
+			<AppenderRef ref="trace" />
+			<AppenderRef ref="info" />
+			<AppenderRef ref="error" />
+	 		<AppenderRef ref="socket" level="INFO"/>
+		</Logger>
 	</Loggers>
 </Configuration>
