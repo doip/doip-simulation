@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import doip.library.message.UdsMessage;
+import doip.library.util.LookupTable;
 import doip.simulation.api.Ecu;
 
 public abstract class EcuBase implements Ecu {
@@ -26,6 +27,27 @@ public abstract class EcuBase implements Ecu {
 		}
 		this.config = config;
 	}
+	
+	@Override
+	public String getNamme() {
+		return this.getConfig().getName();
+	}
+
+	@Override
+	public void reset() {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public LookupTable getConfiguredLookupTable() {
+		return this.getConfig().getUdsLookupTable();
+	}
+
+	@Override
+	public LookupTable getRuntimeLookupTable() {
+		return this.getConfig().getUdsLookupTable();
+	}
+
 
 	public void addListener(EcuListener listener) {
 		logger.trace(">>> public void addListener(EcuListener listener)");

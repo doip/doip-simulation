@@ -431,13 +431,4 @@ public class StandardEcu extends EcuBase implements Runnable {
 		}
 	}
 
-	@Override
-	public String getNamme() {
-		return this.getConfig().getName();
-	}
-
-	@Override
-	public void reset() {
-		// TODO Auto-generated method stub
-	}
 }
