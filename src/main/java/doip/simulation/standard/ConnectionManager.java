@@ -13,7 +13,7 @@ import doip.library.message.DoipTcpAliveCheckRequest;
 import doip.library.message.DoipTcpAliveCheckResponse;
 import doip.library.message.DoipTcpRoutingActivationRequest;
 import doip.library.timer.NanoTimer;
-import doip.simulation.nodes.AliveCheckResponseCollector;
+import doip.simulation.AliveCheckResponseCollector;
 
 // TODO: Instead of synchronized methods we should use a lock
 // to prevent consistent list of current connections

@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import com.starcode88.jtest.InitializationError;
 import com.starcode88.jtest.TestExecutionError;
 
-import doip.simulation.nodes.GatewayConfig;
+import doip.simulation.GatewayConfig;
 import doip.tester.toolkit.TesterTcpConnection;
 import doip.tester.toolkit.TextBuilder;
 

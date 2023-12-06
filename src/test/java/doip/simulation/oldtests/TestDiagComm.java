@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static com.starcode88.jtest.Assertions.*;
 import doip.library.comm.DoipTcpConnection;
+import doip.library.exception.DoipException;
 import doip.library.message.DoipTcpDiagnosticMessage;
 import doip.library.message.DoipTcpDiagnosticMessagePosAck;
 import doip.library.message.DoipTcpRoutingActivationRequest;
@@ -23,8 +24,9 @@ import doip.library.util.Conversion;
 import doip.library.util.Helper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import doip.simulation.GatewayConfig;
 import doip.simulation.api.Gateway;
-import doip.simulation.nodes.GatewayConfig;
 import doip.simulation.standard.StandardGateway;
 
 public class TestDiagComm implements DoipTcpConnectionTestListener {
@@ -76,7 +78,7 @@ public class TestDiagComm implements DoipTcpConnectionTestListener {
 		
 		try {
 			gateway.start();
-		} catch (IOException e) {
+		} catch (DoipException e) {
 			logger.error("Unexpected " + e.getClass().getName() + " in setUpBeforeClass()");
 			logger.error(Helper.getExceptionAsString(e));
 			fail("Failed to start gateway");

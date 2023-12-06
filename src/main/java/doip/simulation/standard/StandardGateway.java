@@ -17,16 +17,17 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;
 
-import doip.simulation.nodes.EcuBase;
-import doip.simulation.nodes.EcuConfig;
-import doip.simulation.nodes.EcuListener;
+import doip.simulation.EcuBase;
+import doip.simulation.EcuConfig;
+import doip.simulation.EcuListener;
+import doip.simulation.GatewayConfig;
 import doip.simulation.api.Gateway;
 import doip.simulation.api.ServiceState;
-import doip.simulation.nodes.GatewayConfig;
 import doip.library.comm.DoipTcpConnection;
 import doip.library.comm.DoipTcpConnectionListener;
 import doip.library.comm.DoipUdpMessageHandler;
 import doip.library.comm.DoipUdpMessageHandlerListener;
+import doip.library.exception.DoipException;
 import doip.library.exception.IllegalNullArgument;
 import doip.library.message.DoipTcpAliveCheckRequest;
 import doip.library.message.DoipTcpAliveCheckResponse;
@@ -862,7 +863,7 @@ public class StandardGateway
 	/**
 	 * Starts the gateway thread.
 	 */
-	public void start() throws IOException {
+	public void start() throws DoipException {
 		if (logger.isTraceEnabled()) {
 			logger.trace(">>> public void start()");
 		}
@@ -901,8 +902,9 @@ public class StandardGateway
 			
 
 		} catch (IOException e) {
-			logger.error(Helper.getExceptionAsString(e));
-			throw e;
+			String text = Helper.getExceptionAsString(e);  
+			logger.error(text);
+			throw new DoipException(e);
 		}
 		if (logger.isTraceEnabled()) {
 			logger.trace(enter, "<<< public void start()");

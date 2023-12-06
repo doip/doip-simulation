@@ -22,8 +22,9 @@ import doip.library.timer.NanoTimer;
 import doip.library.util.Helper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import doip.simulation.nodes.EcuConfig;
-import doip.simulation.nodes.GatewayConfig;
+
+import doip.simulation.EcuConfig;
+import doip.simulation.GatewayConfig;
 import doip.simulation.standard.StandardGateway;
 
 /**

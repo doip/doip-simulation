@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import doip.library.message.UdsMessage;
 import doip.library.util.LookupEntry;
 import doip.library.util.LookupTable;
-import doip.simulation.nodes.EcuConfig;
+import doip.simulation.EcuConfig;
 import doip.simulation.standard.StandardEcu;
 
 public class MaxByteArraySizeLookup {

@@ -4,12 +4,13 @@ import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import doip.simulation.nodes.EcuBase;
-import doip.simulation.nodes.EcuConfig;
+
 import doip.library.message.UdsMessage;
 import doip.library.util.Conversion;
 import doip.library.util.Helper;
 import doip.library.util.LookupTable;
+import doip.simulation.EcuBase;
+import doip.simulation.EcuConfig;
 
 /**
  * Implements the standard behavior of an ECU. The ECU is implemented as a

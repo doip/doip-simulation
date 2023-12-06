@@ -31,8 +31,9 @@ import doip.library.util.Conversion;
 import doip.library.util.Helper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import doip.simulation.GatewayConfig;
 import doip.simulation.api.Gateway;
-import doip.simulation.nodes.GatewayConfig;
 import doip.simulation.standard.StandardGateway;
 
 public class TestSimulation implements DoipTcpConnectionTestListener,

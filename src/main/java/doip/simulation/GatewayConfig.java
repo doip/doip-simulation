@@ -1,4 +1,4 @@
-package doip.simulation.nodes;
+package doip.simulation;
 
 import java.io.IOException;
 import java.net.InetAddress;

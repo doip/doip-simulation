@@ -1,4 +1,4 @@
-package doip.simulation.nodes;
+package doip.simulation;
 
 import java.util.Iterator;
 import java.util.LinkedList;

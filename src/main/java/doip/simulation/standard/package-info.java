@@ -1,5 +1,5 @@
 /**
- * Implements default DoIP simulation according to ISO 13400-2:2012
+ * Implements default DoIP simulation according to ISO 13400-2:2019
  * 
  * @author Marco Wehnert
  *

@@ -18,12 +18,13 @@ import com.starcode88.jtest.TestCaseDescribed;
 import com.starcode88.jtest.TestExecutionError;
 import com.starcode88.jtest.TextBuilder;
 
+import doip.library.exception.DoipException;
 import doip.library.message.DoipUdpVehicleAnnouncementMessage;
 import doip.library.properties.EmptyPropertyValue;
 import doip.library.properties.MissingProperty;
 import doip.library.properties.MissingSystemProperty;
+import doip.simulation.GatewayConfig;
 import doip.simulation.api.Gateway;
-import doip.simulation.nodes.GatewayConfig;
 import doip.simulation.standard.StandardGateway;
 import doip.tester.toolkit.CheckResult;
 import doip.tester.toolkit.EventChecker;
@@ -54,7 +55,7 @@ class TC_0046_VehicleIdentification extends TestCaseDescribed {
 	private static InetAddress localhost = null;
 
 	@BeforeAll
-	public static void setUpBeforeClass() throws InitializationError {
+	public static void setUpBeforeClass() throws InitializationError, IOException {
 		setUpBeforeClass(PREFIX + BASE_ID);
 		setup = new TestSetup();
 		gatewayConfig = new GatewayConfig();
@@ -66,7 +67,7 @@ class TC_0046_VehicleIdentification extends TestCaseDescribed {
 			gatewayConfig.loadFromFile("src/test/resources/gateway.properties");
 			gateway = new StandardGateway(gatewayConfig);
 			gateway.start();
-		} catch (IOException | EmptyPropertyValue | MissingProperty | MissingSystemProperty e) {
+		} catch (DoipException | EmptyPropertyValue | MissingProperty | MissingSystemProperty e) {
 			throw logger.throwing(new InitializationError(TextBuilder.unexpectedException(e), e));
 		}
 	}

@@ -1,7 +1,7 @@
 package doip.simulation.oldtests;
 
 import doip.library.message.UdsMessage;
-import doip.simulation.nodes.EcuConfig;
+import doip.simulation.EcuConfig;
 import doip.simulation.standard.StandardEcu;
 
 public class BusyEcu extends StandardEcu {

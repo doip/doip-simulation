@@ -14,11 +14,12 @@ import com.starcode88.jtest.TestCaseDescribed;
 import com.starcode88.jtest.TestExecutionError;
 import com.starcode88.jtest.TextBuilder;
 
+import doip.library.exception.DoipException;
 import doip.library.properties.EmptyPropertyValue;
 import doip.library.properties.MissingProperty;
 import doip.library.properties.MissingSystemProperty;
+import doip.simulation.GatewayConfig;
 import doip.simulation.api.Gateway;
-import doip.simulation.nodes.GatewayConfig;
 import doip.simulation.standard.StandardGateway;
 import doip.tester.toolkit.CheckResult;
 import doip.tester.toolkit.DoipTcpConnectionWithEventCollection;
@@ -51,6 +52,7 @@ public class TestCaseSimulation extends TestCaseDescribed {
 	 * Sets up the test environment.
 	 * @param classId
 	 * @throws InitializationError
+	 * @throws DoipException 
 	 */
 	public static void setUpBeforeClass(String classId) throws InitializationError {
 		ThreadContext.put("context", "tester");
@@ -66,7 +68,7 @@ public class TestCaseSimulation extends TestCaseDescribed {
 			gateway = new StandardGateway(gatewayConfig);
 			gateway.start();
 			Thread.sleep(2000);
-		} catch (IOException | EmptyPropertyValue | MissingProperty | MissingSystemProperty | InterruptedException e) {
+		} catch (DoipException | IOException | EmptyPropertyValue | MissingProperty | MissingSystemProperty | InterruptedException e) {
 			throw logger.throwing(new InitializationError(TextBuilder.unexpectedException(e), e));
 		}
 	}
