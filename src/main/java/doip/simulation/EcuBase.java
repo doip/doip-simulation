@@ -29,7 +29,7 @@ public abstract class EcuBase implements Ecu {
 	}
 	
 	@Override
-	public String getNamme() {
+	public String getName() {
 		return this.getConfig().getName();
 	}
 

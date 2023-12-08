@@ -108,7 +108,7 @@ public class StandardGateway
 	 * List of ECUs which are behind this gateway. To this ECUs the UDS messages 
 	 * will be send and the ECUs will send back their responses.
 	 */
-	private LinkedList<EcuBase> ecuList = new LinkedList<EcuBase>();
+	private List<EcuBase> ecus = new LinkedList<EcuBase>();
 
 	/**
 	 * Every TCP connection (which will be running in a thread) 
@@ -119,6 +119,8 @@ public class StandardGateway
 	private int connectionInstanceCounter = 0;
 	
 	private Timer timerVam = null;
+	
+	private ServiceState serviceState = ServiceState.STOPPED;
 
 	public StandardGateway(GatewayConfig config) {
 		String method = "public StandardGateway(GatewayConfig config)";
@@ -151,12 +153,13 @@ public class StandardGateway
 		
 		this.config = config;
 		connectionManager = createConnectionManager();
+		logger.debug("Prepare ECUs");
+		this.prepareEcus();
 	}
 
 	@Override
 	public ServiceState getState() {
-		// TODO Auto-generated method stub
-		return null;
+		return serviceState;
 	}
 
 	@Override
@@ -166,14 +169,18 @@ public class StandardGateway
 
 	@Override
 	public doip.simulation.api.Ecu getEcuByName(String name) {
-		// TODO Auto-generated method stub
+		for (EcuBase ecu : ecus) {
+			if (name.equals(ecu.getName())) {
+				return ecu;
+			}
+		}
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<doip.simulation.api.Ecu> getEcus() {
-		// TODO Auto-generated method stub
-		return null;
+		return (List<doip.simulation.api.Ecu>)(List<?>)ecus;
 	}
 
 	public ConnectionManager createConnectionManager() {
@@ -300,7 +307,7 @@ public class StandardGateway
 		// Iterate over all ECUs and find ECUs which have a 
 		// physical or functional address like target address.
 		LinkedList<EcuBase> targetEcus = new LinkedList<EcuBase>();
-		for (EcuBase tmpEcu : this.ecuList) {
+		for (EcuBase tmpEcu : this.ecus) {
 			if ((tmpEcu.getConfig().getPhysicalAddress() == target) ||
 				 (tmpEcu.getConfig().getFunctionalAddress() == target)) {
 				targetEcus.add(tmpEcu);
@@ -736,7 +743,7 @@ public class StandardGateway
 			EcuConfig ecuConfig = iter.next();
 			EcuBase ecu = this.createEcu(ecuConfig);
 			ecu.addListener(this);
-			this.ecuList.add(ecu);
+			this.ecus.add(ecu);
 		}
 		logger.trace(exit, "<<< public void prepareEcus()");
 	}
@@ -864,10 +871,10 @@ public class StandardGateway
 	 * Starts the gateway thread.
 	 */
 	public void start() throws DoipException {
-		if (logger.isTraceEnabled()) {
-			logger.trace(">>> public void start()");
-		}
 		try {
+			logger.trace(">>> public void start()");
+			this.serviceState = ServiceState.STOPPED;
+
 			logger.debug("Create UDP socket");
 			this.udpSocket = Helper.createUdpSocket(config.getLocalAddress(), config.getLocalPort(),
 					config.getMulticastAddress());
@@ -883,8 +890,6 @@ public class StandardGateway
 			this.tcpServerThread = new TcpServerThread(config.getName() + ":TCP-SERV");
 			this.tcpServerThread.addListener(this);
 
-			logger.debug("Prepare ECUs");
-			this.prepareEcus();
 			logger.debug("Start ECUs");
 			this.startEcus();
 
@@ -900,29 +905,23 @@ public class StandardGateway
 				this.timerVam.start(500, 3);
 			}
 			
-
+			this.serviceState = ServiceState.RUNNING;
 		} catch (IOException e) {
-			String text = Helper.getExceptionAsString(e);  
-			logger.error(text);
-			throw new DoipException(e);
-		}
-		if (logger.isTraceEnabled()) {
+			this.serviceState = ServiceState.ERROR;
+			throw logger.throwing(new DoipException(e));
+		} finally {
 			logger.trace(enter, "<<< public void start()");
 		}
 	}
 
 	public void startEcus() {
-		if (logger.isTraceEnabled()) {
-			logger.trace(">>> public void startEcus()");
-		}
-		Iterator<EcuBase> iter = this.ecuList.iterator();
+		logger.trace(">>> public void startEcus()");
+		Iterator<EcuBase> iter = this.ecus.iterator();
 		while (iter.hasNext()) {
 			EcuBase ecu = iter.next();
 			ecu.start();
 		}
-		if (logger.isTraceEnabled()) {
-			logger.trace("<<< public void startEcus()");
-		}
+		logger.trace("<<< public void startEcus()");
 	}
 
 	/**
@@ -951,8 +950,8 @@ public class StandardGateway
 		logger.debug("Stop ECUs");
 		this.stopEcus();
 
-		logger.debug("Unprepare ECUs");
-		this.unprepareEcus();
+		//logger.debug("Unprepare ECUs");
+		//this.unprepareEcus();
 
 		if (this.tcpServerThread != null) {
 			logger.debug("Unprepare TCP server thread");
@@ -983,7 +982,7 @@ public class StandardGateway
 
 	public void stopEcus() {
 		logger.trace(">>> public void stopEcus()");
-		Iterator<EcuBase> iter = this.ecuList.iterator();
+		Iterator<EcuBase> iter = this.ecus.iterator();
 		while (iter.hasNext()) {
 			EcuBase ecu = iter.next();
 			ecu.stop();
@@ -991,16 +990,17 @@ public class StandardGateway
 		logger.trace("<<< public void stopEcus()");
 	}
 
+	/*
 	public void unprepareEcus() {
 		logger.trace(">>> public void unprepareEcus()");
-		Iterator<EcuBase> iter = this.ecuList.iterator();
+		Iterator<EcuBase> iter = this.ecus.iterator();
 		while (iter.hasNext()) {
 			EcuBase ecu = iter.next();
 			ecu.removeListener(this);
 		}
-		this.ecuList.clear();
+		this.ecus.clear();
 		logger.trace("<<< public void unprepareEcus()");
-	}
+	}*/
 
 	@Override
 	public void onTimerExpired(Timer timer) {
@@ -1026,14 +1026,6 @@ public class StandardGateway
 // Getter & setter
 //-----------------------------------------------------------------------------
 	
-	/**
-	 * Getter for member 'ecuList'
-	 * @return
-	 */
-	public LinkedList<EcuBase> getEcuList() {
-		return ecuList;
-	}
-
 	/**
 	 * Getter for member 'standardConnectionList' 
 	 * @return
