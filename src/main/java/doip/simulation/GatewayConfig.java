@@ -112,7 +112,7 @@ public class GatewayConfig {
 		return vin;
 	}
 
-	public void loadEcus(String path, String ecuFiles) throws IOException, MissingProperty, EmptyPropertyValue {
+	private void loadEcus(String path, String ecuFiles) throws IOException, MissingProperty, EmptyPropertyValue {
 		logger.trace(">>> public void loadEcus() throws IOException, MissingProperty, EmptyPropertyValue");
 		if (ecuFiles == null) {
 			logger.trace("<<< public void loadEcus() throws IOException, MissingProperty, EmptyPropertyValue");
