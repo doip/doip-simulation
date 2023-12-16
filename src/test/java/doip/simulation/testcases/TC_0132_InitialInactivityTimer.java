@@ -21,13 +21,13 @@ import doip.tester.toolkit.TextBuilder;
 import doip.tester.toolkit.event.DoipEvent;
 import doip.tester.toolkit.event.DoipEventConnectionClosed;
 
-public class TC_0132_InactivityTimer extends TestCaseSimulation 	{
+public class TC_0132_InitialInactivityTimer extends TestCaseSimulation 	{
 	
 	public static final String BASE_ID = "0132";
 	
 	public static final String PREFIX = "TC-";
 	
-	private static Logger logger = LogManager.getLogger(TC_0132_InactivityTimer.class);
+	private static Logger logger = LogManager.getLogger(TC_0132_InitialInactivityTimer.class);
 	
 	@BeforeAll
 	public static void setUpBeforeClass() throws InitializationError {

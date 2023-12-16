@@ -71,7 +71,7 @@ public class StandardGateway
 	private static Marker enter = MarkerManager.getMarker("ENTER");
 	
 	/** Log4j marker for function exit */
-	private static Marker exit = MarkerManager.getMarker("EXIT'");
+	private static Marker exit = MarkerManager.getMarker("EXIT");
 
 	/**
 	 * Contains the configuration for this gateway
@@ -97,11 +97,9 @@ public class StandardGateway
 	private TcpServerThread tcpServerThread = null;
 
 	/**
-	 * List of TCP connections which have been established to the gateway
+	 * ConnectionManager who is responsible to handle 
+	 * routing activation messages 
 	 */
-	//private LinkedList<StandardTcpConnectionGateway> standardConnectionList = new LinkedList<StandardTcpConnectionGateway>();
-	
-	// TODO: get max Connections from config
 	private ConnectionManager connectionManager;
 
 	/**

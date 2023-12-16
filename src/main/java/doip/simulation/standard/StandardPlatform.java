@@ -25,7 +25,7 @@ public class StandardPlatform implements Platform {
 	private ServiceState state = ServiceState.STOPPED;
 
 	public StandardPlatform(PlatformConfig config) throws DoipException {
-		String method = "public PlatformDcp(String name)";
+		String method = "public StandardPlatform(String name)";
 		try {
 			logger.trace(">>> {}", method);
 			this.config = config;

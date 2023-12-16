@@ -57,10 +57,10 @@ public class PlatformConfig {
 			logger.trace(">>> {}", method);
 			PropertyFile file = new PropertyFile(filename);
 			this.name = file.getMandatoryPropertyAsString("name");
+			logger.debug("Reading platform with name \"{}\"", this.getName());
 			this.gatewayFiles = file.getMandatoryPropertyAsString("gateway.files");
 			String path = Helper.getPathOfFile(filename);
 			loadGatewayConfigs(path, gatewayFiles);
-
 		} catch (IOException e) {
 			throw logger.throwing(e);
 		} catch (MissingProperty e) {
@@ -73,13 +73,18 @@ public class PlatformConfig {
 	}
 	
 	public void loadGatewayConfigs(String path, String gatewayFiles) throws IOException, MissingProperty, EmptyPropertyValue {
-		
-		String[] files = gatewayFiles.split(";");
-		for (int i = 0; i < files.length; i++) {
-			String filenameWithPath = path + files[i];
-			GatewayConfig config = new GatewayConfig();
-			config.loadFromFile(filenameWithPath);
-			this.gatewayConfigList.add(config);
+		String method = "public void loadGatewayConfigs(String path, String gatewayFiles)";
+		try {
+			logger.trace(">>> {}", method);
+			String[] files = gatewayFiles.split(";");
+			for (int i = 0; i < files.length; i++) {
+				String filenameWithPath = path + files[i];
+				GatewayConfig config = new GatewayConfig();
+				config.loadFromFile(filenameWithPath);
+				this.gatewayConfigList.add(config);
+			}
+		} finally {
+			logger.trace("<<< {}", method);
 		}
 	}
 }
