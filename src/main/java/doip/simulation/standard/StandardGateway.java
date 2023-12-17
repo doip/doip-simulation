@@ -602,11 +602,8 @@ public class StandardGateway
 	public void onDoipUdpEntityStatusRequest(DoipUdpEntityStatusRequest doipMessage, DatagramPacket packet) {
 		logger.trace(enter,
 				">>> void processDoipUdpEntityStatusRequest(DoipUdpEntityStatusRequest doipMessage, DatagramPacket packet)");
-		// TODO: get current number of connections
-//		DoipUdpEntityStatusResponse doipResponse = new DoipUdpEntityStatusResponse(0, 255,
-//				this.standardConnectionList.size(), 65536);
 		DoipUdpEntityStatusResponse doipResponse = new DoipUdpEntityStatusResponse(0, 255,
-				0, 65536);
+				this.connectionManager.getNumberOfCurrentConnections() , 65536);
 		byte[] response = doipResponse.getMessage();
 		try {
 			this.sendDatagramPacket(response, response.length, packet.getAddress(), packet.getPort());

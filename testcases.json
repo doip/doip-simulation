@@ -25,20 +25,38 @@
 			"description": "Check if the TCP connection will be closed when the general inactivity timer will expire",
 			"testSteps": [
 				{
-					"action": "Establish a connection to the DoIP server",
-					"expectedResult": "A connection could be established"
+					"action": "Establish a TCP connection to the DoIP entity.",
+					"expectedResult": "A TCP connection could be established."
 				},
 				{
-					"action": "Perform routing activation",
-					"expectedResult": "Routing activation was successful"
+					"action": "Perform routing activation.",
+					"expectedResult": "Routing activation was successful."
 				},
 				{
-					"action": "Wait about 90% of the time given by general inactivity timer",
-					"expectedResult": "The connection hasn't been closed"
+					"action": "Wait about 90% of the time given by general inactivity timer.",
+					"expectedResult": "The connection hasn't been closed."
 				},
 				{
-					"action": "Wait about 20% of the time given by general inactivity timer (Which gives us a total time of 110% from the beginning)",
-					"expectedResult": "The connection has been closed"
+					"action": "Wait about 20% of the time given by general inactivity timer (Which gives us a total time of 110% from the beginning).",
+					"expectedResult": "The connection has been closed."
+				}
+			]
+		},
+		{
+			"id": "ST-0120-01",
+			"description": "Send message 'DoIP entity status request' to IP unicast address and check the response 'DoIP entity status response'",
+			"testSteps": [
+				{
+					"action": "Send message 'DoIP entity status request'",
+					"expectedResult": "A response of type 'DoIP entity status response' has been received. The item 'Max. concurrent TCP_DATA sockets' matches the value in the configuration for that node. The item 'Currently open TCP_DATA sockets' has the value 0."
+				},
+				{
+					"action": "Open a TCP connection to the DoIP entity.",
+					"expectedResult": "TCP connection has been established."
+				},
+				{
+					"action": "Send again a 'DoIP entity status request'.",
+					"expectedResult": "The value of item 'Currently open TCP_DATA sockets' has now changed to 1."
 				}
 			]
 		}

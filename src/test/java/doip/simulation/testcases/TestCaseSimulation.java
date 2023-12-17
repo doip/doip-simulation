@@ -30,7 +30,7 @@ import doip.tester.toolkit.TesterUdpCommModule;
 import doip.tester.toolkit.exception.RoutingActivationFailed;
 
 /**
- * Base class for all unit tests inside doip-simulation
+ * Base class for all test cases which will test the DoIP simulation.
  */
 public class TestCaseSimulation extends TestCaseDescribed {
 	
@@ -93,6 +93,14 @@ public class TestCaseSimulation extends TestCaseDescribed {
 	public GatewayConfig getGatewayConfig() {
 		return gatewayConfig;
 	}
+	
+	public TesterUdpCommModule getTesterUdpCommModule() {
+		return udpComm;
+	}
+	
+	public InetAddress getLocalHost() {
+		return localhost;
+	}
 
 	public TesterTcpConnection createTcpConnection() throws IOException {
 		TesterTcpConnection conn = null;
@@ -134,10 +142,20 @@ public class TestCaseSimulation extends TestCaseDescribed {
 		//PlantUml.colorNote(this, "Routing activation performed as expected", "#AAFFAA");
 	}
 	
+	/**
+	 * Returns the value of the initial inactivity timeout.
+	 * @return
+	 */
 	public int get_T_TCP_Initial_Inactivity() {
 		return testConfig.get_T_TCP_Initial_Inactivity();
 	}
 	
+	/**
+	 * Checks the result for no error. The the result has no error
+	 * it just creates a log message with the result text. If it has
+	 * an error it will call method 'fail' which throws an AssertionError.
+	 * @param result The result which will be checked.
+	 */
 	public void checkResultForNoError(CheckResult result) {
 		if (result.getCode() == CheckResult.NO_ERROR) {
 			//PlantUml.colorNote(this, result.getText(), "#AAFFAA");

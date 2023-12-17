@@ -64,6 +64,10 @@ public class ConnectionManager {
 		return registeredConnections;
 	}
 	
+	public int getNumberOfCurrentConnections() {
+		return this.connections.size();
+	}
+	
 	public synchronized StandardTcpConnectionGateway getConnectionBySourceAddress(int sourceAddress) {
 		for (StandardTcpConnectionGateway conn : connections) {
 			if (conn.getRegisteredSourceAddress() == sourceAddress) {
