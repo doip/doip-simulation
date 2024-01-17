@@ -111,7 +111,15 @@ public class GatewayConfig {
 	public byte[] getVin() {
 		return vin;
 	}
-
+	/**
+	 * Loads ECU files from a specified path.
+	 *
+	 * @param  path       the path where the ECU files are located
+	 * @param  ecuFiles   a string containing the names of the ECU files, separated by semicolons
+	 * @throws IOException         if there is an error reading the files
+	 * @throws MissingProperty     if a required property is missing
+	 * @throws EmptyPropertyValue if a property value is empty
+	 */
 	private void loadEcus(String path, String ecuFiles) throws IOException, MissingProperty, EmptyPropertyValue {
 		logger.trace(">>> public void loadEcus() throws IOException, MissingProperty, EmptyPropertyValue");
 		if (ecuFiles == null) {
